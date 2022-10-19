@@ -4,7 +4,7 @@
 __pycache__/
 
 testing
-logging/
+logs/
 
 dji-sdk-python/
 
