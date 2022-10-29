@@ -1,8 +1,9 @@
 import os
 import logging
 from datetime import datetime
+from utils import get_root_dir
 
-DIRECTORY = os.getcwd()
+DIRECTORY = get_root_dir()
 
 
 def start_logging(log_directory='') -> None:
@@ -27,3 +28,4 @@ def start_logging(log_directory='') -> None:
     formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
     handler.setFormatter(formatter)
     root_logger.addHandler(handler)
+
