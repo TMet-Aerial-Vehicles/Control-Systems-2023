@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import time
 from pyzbar.pyzbar import decode
-import qr_format as qr_format
+import qr.qr_format as qr_format
 
 import logging
 from logging_script import start_logging
@@ -15,7 +15,7 @@ class QRReader:
         self.raw_message = None
         self.message = None
 
-    def read(self, camera, active_display=False, display_time=15, image=None) \
+    def read(self, camera=None, active_display=False, display_time=15, image=None) \
             -> None:
         """Using input image, finds QR code within the image, and saves the
         decoded and formatted message
