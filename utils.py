@@ -17,4 +17,5 @@ def get_root_dir() -> str:
             return cwd
         else:
             cwd = os.path.dirname(cwd)
+            iter_count += 1
     return os.getcwd()
