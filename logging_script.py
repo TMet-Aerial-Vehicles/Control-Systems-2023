@@ -17,9 +17,14 @@ def start_logging(log_directory='') -> None:
     """
     log_filename = f"log-{datetime.today().strftime('%Y-%m-%d-%H')}.log"
     if log_directory:
+        if not os.path.isdir(log_directory):
+            os.mkdir(log_directory)
         log_path = f"{log_directory}/{log_filename}"
     else:
-        log_path = f"{DIRECTORY}/logs/{log_filename}"
+        log_path = f"{DIRECTORY}/logs"
+        if not os.path.isdir(log_path):
+            os.mkdir(log_path)
+        log_path += f"/{log_filename}"
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)
