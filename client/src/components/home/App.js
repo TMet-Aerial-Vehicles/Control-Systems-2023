@@ -1,7 +1,7 @@
 import './App.css';
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import axios from "axios";
-import QrReader from "../QrReader/QrReader";
+import VideoReader from "../VideoReader/VideoReader";
 
 function App() {
     const [test, setTest] = useState("");
@@ -16,12 +16,15 @@ function App() {
 
     return (
         <div className="App">
-            <header className="App-header">
-                <p>
-                    {test.body}
-                </p>
+            <header className='app-header'>
+                // TMAV
             </header>
-            <QrReader></QrReader>
+            <br/>
+            <p>
+               Test Data: {test.body}
+            </p>
+            <br/>
+            <VideoReader/>
         </div>
     );
 }
