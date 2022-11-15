@@ -8,7 +8,7 @@ function App() {
     useEffect(() => {
         axios.get("/testing").then(res => {
             console.log("SUCCESS", res);
-            setTest(res.data);
+            setTest(res.data.body);
         }).catch(error => {
             console.log(error)
         })
@@ -21,7 +21,7 @@ function App() {
             </header>
             <br/>
             <p>
-               Test Data: {test.body}
+               Test Data: {test}
             </p>
             <br/>
             <VideoReader/>
