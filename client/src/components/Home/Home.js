@@ -1,9 +1,9 @@
-import './App.css';
+import './Home.css';
 import React, {useEffect, useState} from "react";
 import axios from "axios";
 import VideoReader from "../VideoReader/VideoReader";
 
-function App() {
+function Home() {
     const [test, setTest] = useState("");
     useEffect(() => {
         axios.get("/testing").then(res => {
@@ -15,7 +15,7 @@ function App() {
     }, []);
 
     return (
-        <div className="App">
+        <div className="Home">
             <header className='app-header'>
                 // TMAV
             </header>
@@ -29,4 +29,4 @@ function App() {
     );
 }
 
-export default App;
+export default Home;
