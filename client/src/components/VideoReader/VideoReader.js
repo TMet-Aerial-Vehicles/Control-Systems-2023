@@ -37,7 +37,7 @@ function VideoReader() {
     return (
         <>
             <ButtonGroup className='qr-controls' variant='contained' aria-label='outlined primary button group'>
-                <Button disabled={camera === true} onClick={() => {setCamera(!camera)}}>ON</Button>
+                <Button disabled={camera === true} onClick={() => {setCamera(true)}}>ON</Button>
                 <Button disabled={camera === false} onClick={() => {setCamera(false)}}>OFF</Button>
             </ButtonGroup>
             <br/>
