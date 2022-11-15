@@ -1,13 +1,9 @@
 # CS-Ground
 
-<hr>
-
 ## Description
 
 
 # Client Setup
-
-<hr>
 
 ## Description
 
@@ -21,8 +17,6 @@ npm start
 ```
 
 # Server Setup
-
-<hr>
 
 ## Description
 
