@@ -1,13 +1,8 @@
-.qr-controls {
-    display: block;
-}
-
 .qr-reader {
-    display: inline-block;
-    width: 30%;
+    margin-top: -2vh;
 }
 
 .reader-text {
     font-size: medium;
-    margin-top: -50px;
+    margin-top: 5%;
 }
