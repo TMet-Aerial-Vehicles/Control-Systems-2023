@@ -61,9 +61,9 @@ function SubmitQR(props) {
                         autoWidth
                         onChange={handleChange}
                     >
-                        <MenuItem value={1}>One</MenuItem>
-                        <MenuItem value={2}>Two</MenuItem>
-                        <MenuItem value={3}>Three</MenuItem>
+                        {props.opts !== undefined ? props.opts.map((elem) => {
+                            return <MenuItem value={elem.value}>{elem.text}</MenuItem>
+                        }): null}
                     </Select>
             </FormControl>
             <Button sx={{marginTop: '3%'}} variant='contained' onClick={() => onSubmit()}>Submit</Button>
@@ -71,7 +71,7 @@ function SubmitQR(props) {
     )
 }
 
-function VideoReader() {
+function VideoReader(props) {
     const [qrRaw, setQrRaw] = useState("No Result")
     const [camera, setCamera] = useState(false)
 
@@ -92,7 +92,7 @@ function VideoReader() {
                 </Grid>
                 <Grid xs={6}>
                     <p className='reader-text'>{qrRaw}</p>
-                    <SubmitQR qrRaw={qrRaw}/>
+                    <SubmitQR qrRaw={qrRaw} opts={props.opts}/>
                 </Grid>
             </Grid>
         </Box>
