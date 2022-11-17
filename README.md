@@ -9,11 +9,20 @@
 
 Front end system using ReactJs
 
+## Dependencies
+
+npm version 8.19.2+
+
 ## Running Client
 ```commandline
 cd client
 npm install  # update dependencies
 npm start
+```
+
+If an error related to dependencies is raised, run the following:
+```
+npm install --legacy-peer-deps
 ```
 
 # Server Setup

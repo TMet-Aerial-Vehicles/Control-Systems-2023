@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -32,6 +32,8 @@ def validate_qr():
     # Checks format of raw_qr_string if it conforms to the type
     # Saves QR formatted class to variable
     # Returns success if valid
+    jsonResponse = request.get_json() # parsable dictionary
+    print(jsonResponse)
     return {'status': 'SUCCESS'}
 
 

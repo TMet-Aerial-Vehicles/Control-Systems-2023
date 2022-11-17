@@ -1,7 +1,6 @@
 import './Home.css';
 import React, {useEffect, useState} from "react";
 import axios from "axios";
-import VideoReader from "../VideoReader/VideoReader";
 
 function Home() {
     const [test, setTest] = useState("");
@@ -17,14 +16,12 @@ function Home() {
     return (
         <div className="Home">
             <header className='app-header'>
-                // TMAV
+                TMAV
             </header>
             <br/>
             <p>
                Test Data: {test}
             </p>
-            <br/>
-            <VideoReader/>
         </div>
     );
 }
