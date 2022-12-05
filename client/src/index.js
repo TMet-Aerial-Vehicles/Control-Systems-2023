@@ -7,7 +7,6 @@ import Layout from './components/Layout/Layout';
 import Home from './components/Home/Home';
 import Task1 from './components/Task1/Task1';
 import Task2 from './components/Task2/Task2';
-import TelemCompoment from './components/Telemetry Receiver/TelemComponent';
 
 
 export default function App() {
@@ -18,7 +17,6 @@ export default function App() {
                     <Route index element={<Home />} />
                     <Route path="task-1" element={<Task1 />} />
                     <Route path="task-2" element={<Task2 />} />
-                    <Route path="TelemComponent" element={<TelemCompoment />} />
                     <Route path="*" element={<Home />} />
                 </Route>
             </Routes>

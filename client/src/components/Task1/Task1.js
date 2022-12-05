@@ -5,9 +5,10 @@ import { styled } from '@mui/material/styles';
 import Paper from '@mui/material/Paper';
 import Grid from '@mui/material/Unstable_Grid2';
 import Box from '@mui/material/Box';
+import TelemetryReceiver from "../TelemetryReceiver/TelemetryReceiver";
 
 function Task1() {
-    
+
     const Item = styled(Paper)(({ theme }) => ({
         backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
         ...theme.typography.body2,
@@ -27,7 +28,7 @@ function Task1() {
                     </Item>
                 </Grid>
                 <Grid xs={6}>
-                    <Item>Component Here</Item>
+                    <Item><TelemetryReceiver/></Item>
                 </Grid>
                 <Grid xs={6}>
                     <Item>Component Here</Item>

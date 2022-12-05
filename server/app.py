@@ -1,16 +1,17 @@
 from flask import Flask, jsonify, request
-telem =[{
-    "longtitude" :5,
-    "lat" :6,
-    "height" :69,
+
+telem = [{
+    "longitude": 5,
+    "latitude": 6,
+    "height": 69,
     "time": 1110
 }]
 app = Flask(__name__)
-app.config['CORS-HEADERS'] : 'Content-Type'
-
+app.config['CORS-HEADERS']: 'Content-Type'
 
 plan = None
 telemetry = []  # Fixed size queue?
+
 
 @app.route('/', methods=['GET'])
 def hello_world():  # put application's code here
@@ -38,7 +39,7 @@ def validate_qr():
     # Checks format of raw_qr_string if it conforms to the type
     # Saves QR formatted class to variable
     # Returns success if valid
-    jsonResponse = request.get_json() # parsable dictionary
+    jsonResponse = request.get_json()  # parsable dictionary
     print(jsonResponse)
     return {'status': 'SUCCESS'}
 
@@ -57,16 +58,16 @@ def get_parsed_qr(qr_type):
 
 @app.route('/recent-telemetry', methods=['GET'])
 def get_recent_telemetry():
-    response = jsonify(data = telem[-1],            
-        succes = "200")
+    response = jsonify(data=telem[-1],
+                       success="200")
     response.headers.add('Access-Control-Allow-Origin', '*')
-    return response 
-    
+    return response
+
+
 @app.route('/set-telemetry', methods=['POST'])
 def set_telemetry():
-    return("yeet")
-    #TODO: make this work
-    
+    return ("yeet")
+    # TODO: make this work
 
 
 @app.route('/manual-command', methods=['POST'])
