@@ -38,8 +38,13 @@ function Task1() {
                     <Item>Component Here</Item>
                 </Grid>
                 <Grid xs={6}>
-                    <Item><QRData qrType="1" qrReady={qrReady === 1}></QRData></Item>
-                    <Item><QRData qrType="2" qrReady={qrReady === 2}></QRData></Item>
+                    <Item>
+                        <Grid container>
+                            {/* Display Processed QR Data */}
+                            <Grid item xs={6}><QRData qrType="1" qrReady={qrReady === "1"}/></Grid>
+                            <Grid item xs={6}><QRData qrType="2" qrReady={qrReady === "2"}/></Grid>
+                        </Grid>
+                    </Item>
                 </Grid>
             </Grid>
         </Box>

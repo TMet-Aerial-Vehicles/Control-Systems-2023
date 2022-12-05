@@ -3,12 +3,23 @@ from typing import Union
 
 class Waypoint:
     def __init__(self, name, number, longitude, latitude):
+        """Initialize Waypoint object
+
+        :param name: Waypoint name to associate with (str)
+        :param number: Waypoint unique number (int)
+        :param longitude: Longitude coordinate of Waypoint (float)
+        :param latitude: Latitude coordinate of Waypoint (float)
+        """
         self.name = name
         self.number = number
         self.longitude = longitude
         self.latitude = latitude
 
     def to_dict(self):
+        """Converts Waypoint object to dictionary
+
+        :return: Dictionary with Waypoint details
+        """
         return {
             "name": self.name,
             "number": self.number,
@@ -17,8 +28,6 @@ class Waypoint:
         }
 
 
-MIN_WAYPOINT_NUM = 1
-MAX_WAYPOINT_NUM = 27
 ALL_WAYPOINTS = [
     Waypoint("Alpha", 1, -71.6375025, 48.5166707),
     Waypoint("Bravo", 2, -71.6317518, 48.5060947),
@@ -53,17 +62,31 @@ ALL_WAYPOINTS = [
 class WaypointList:
 
     def __init__(self):
+        """Initialize List of Waypoint objects"""
         self.waypoints = {}
         for waypoint in ALL_WAYPOINTS:
-            self.waypoints[waypoint.number] = waypoint
+            self.waypoints[waypoint.name] = waypoint
 
     def get_wp_by_name(self, name) -> Union[None, Waypoint]:
-        for waypoint in self.waypoints:
-            if waypoint.name == name:
-                return waypoint
+        """Returns waypoint associated with input name
+
+        :param name: Waypoint name to search for (str)
+        :return: Waypoint with given name, else None
+        """
+        if name in self.waypoints:
+            return self.waypoints[name]
         return None
 
     def get_wp_by_num(self, number) -> Union[None, Waypoint]:
-        if MIN_WAYPOINT_NUM <= number <= MAX_WAYPOINT_NUM:
-            return self.waypoints[number]
+        """Returns waypoint associated with input number
+
+        :param number: Waypoint number to search for (str)
+        :return: Waypoint with given number, else None
+        """
+        for waypoint in self.waypoints:
+            if waypoint.number == number:
+                return waypoint
         return None
+
+
+WAYPOINT_LST = WaypointList()

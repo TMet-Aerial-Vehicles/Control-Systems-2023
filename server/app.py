@@ -53,11 +53,17 @@ def process_qr():
     # Process raw_qr_string if it conforms to the expected format of qr_type
     # Saves QR formatted class to QR_LST
     json_r = request.get_json()  # parsable dictionary
-    print(json_r)
+    print(f"Received: {json_r}")
+
+    # Access POST request parameters
     raw_qr_str = json_r["raw_qr_string"] if "raw_qr_string" in json_r else None
     qr_type = int(json_r["qr_type"]) if "qr_type" in json_r else None
+
+    # QR Processing
     if raw_qr_str and qr_type:
-        return QR_LST.qrs[qr_type - 1].process(raw_qr_str)
+        if QR_LST.qrs[qr_type - 1].is_valid(raw_qr_str):
+            return QR_LST.qrs[qr_type - 1].process(raw_qr_str)
+        return {"success": False, "message": f"Invalid QR {qr_type} Format"}
 
     return {"success": False, "message": "Missing Payload Values"}
 
@@ -68,14 +74,12 @@ def get_parsed_qr(qr_type):
     # Checks if that qr is set in variable
     # Returns success and qr data if found
     if 1 <= int(qr_type) <= 3:
-        print("SUCCESSFUL GET")
         return {
             "success": True,
             "qr_type": qr_type,
             "qr_data": QR_LST.qrs[int(qr_type) - 1].convert_to_dict()
         }
     else:
-        print("NOT SET")
         return {
             "success": False,
             "message": "Invalid QR Type"

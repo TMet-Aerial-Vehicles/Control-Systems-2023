@@ -4,9 +4,8 @@ import React, { useState, useEffect } from 'react';
 function QRData(props) {
 
     const [qrData, setQrData] = useState({"success": false, "qr_type": "", "qr_data": {"is_found": false}});
-    // console.log(props.qrReady)
+
     useEffect(() => {
-        console.log("Affected")
         console.log(props.qrReady)
         axios.get(`/get_parsed_qr/${props.qrType}`)
         .then((response) => {
@@ -14,57 +13,71 @@ function QRData(props) {
             setQrData(response.data)
         })
         .catch(error => console.error(`Error: ${error}`));
-    }, [props.qrReady])
-    
-
-    // const getQrData = () => {
-    //     axios.get(`/get_parsed_qr/${props.qr_type}`)
-    //         .then((response) => {
-    //             const returnedData = response.data;
-    //             console.log(returnedData);
-    //         })
-    //         .catch(error => console.error(`Error: ${error}`));
-    // }
-    // {
-    //     success
-    //     qr_type
-    //     qr_data : {
-    //         routes 
-    //         is_found
-    //         raw_qr_string
-    //     }
-    // }
+    }, [props.qrReady]);
 
     if (qrData.qr_data.is_found === false) {
         return <><h1>QR {props.qrType} Not Ready</h1></>
-    }
-    else if (props.qrType === "1") {
-        return (
-            <>
-                <h1>{qrData.success}</h1>
-                <h1>{qrData.qr_type}</h1>
-    
-                <h1>Routes</h1>
-    
-                {qrData.qr_data.routes !== undefined ? qrData.qr_data.routes.map((waypoint) => {
-                    console.log("FOUND")
-                    return (
-                        <>
-                        <h3>Waypoint {waypoint.name} #{waypoint.number}</h3>
-                        <h4>Longitude: {waypoint.longitude}</h4>
-                        <h4>Latitude: {waypoint.latitude}</h4>
-                        </>
-                    )
-                }) : null}
-            </>
-        )
+    } else if (props.qrType === "1") {
+        return <QR1Data qrData={qrData}/>
     } else if (props.qrType === "2") {
-        return <><h1>Q2</h1></>
+        return <QR2Data qrData={qrData}/>
+    } else if (props.qrType === "3") {
+        return <QR3Data qrData={qrData}/>
     } else {
         return <><h1>Unknown QR Type</h1></>
     }
 
-    
+}
+
+function Waypoint(waypoint) {
+    return <>
+        <h4>Waypoint {waypoint.waypoint.name} #{waypoint.waypoint.number}</h4>
+        <h5>Longitude: {waypoint.waypoint.longitude}, Latitude: {waypoint.waypoint.latitude}</h5>
+    </>
+}
+
+function QR1Data(qrData) {
+    return <>
+        <h1>QR {qrData.qrData.qr_type}</h1>
+
+        <h2>Routes</h2>
+        {qrData.qrData.qr_data.routes !== undefined ?
+            qrData.qrData.qr_data.routes.map((waypoint) => {
+                return <Waypoint key={waypoint.number} waypoint={waypoint}/>
+            }) : null
+        }
+    </>
+}
+
+function QR2Data(qrData) {
+    return <>
+        <h1>QR {qrData.qrData.qr_type}</h1>
+
+        <h2>Boundaries</h2>
+        {qrData.qrData.qr_data.boundaries !== undefined ?
+            qrData.qrData.qr_data.boundaries.map((waypoint) => {
+                return <Waypoint key={waypoint.number} waypoint={waypoint}/>
+            }) : null
+        }
+        <br/>
+        <h2>Rejoin at Waypoint:</h2>
+        {qrData.qrData.qr_data.rejoin_waypoint !== undefined ? (
+            <Waypoint key={qrData.qrData.qr_data.rejoin_waypoint.number} waypoint={qrData.qrData.qr_data.rejoin_waypoint}/>
+        ) : null}
+    </>
+}
+
+function QR3Data(qrData) {
+    return <>
+        <h1>QR {qrData.qrData.qr_type}</h1>
+
+        <h2>Routes</h2>
+        {qrData.qrData.qr_data.routes !== undefined ?
+            qrData.qrData.qr_data.routes.map((waypoint) => {
+                return <Waypoint key={waypoint.number} waypoint={waypoint}/>
+            }) : null
+        }
+    </>
 }
 
 export default QRData
