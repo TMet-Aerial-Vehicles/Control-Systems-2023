@@ -86,10 +86,9 @@ def get_parsed_qr(qr_type):
         }
 
 
-@app.route('/recent-telemetry', methods=['GET'])
-def get_recent_telemetry():
-    response = jsonify(data=telemetry[-1],
-                       success="200")
+@app.route('/get-telemetry', methods=['GET'])
+def get_telemetry():
+    response = jsonify(data=telemetry[-1], success="200")
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 

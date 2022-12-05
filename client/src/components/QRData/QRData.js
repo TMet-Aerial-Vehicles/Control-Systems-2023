@@ -29,10 +29,10 @@ function QRData(props) {
 
 }
 
-function Waypoint(waypoint) {
+function Waypoint({waypoint}) {
     return <>
-        <h4>Waypoint {waypoint.waypoint.name} #{waypoint.waypoint.number}</h4>
-        <h5>Longitude: {waypoint.waypoint.longitude}, Latitude: {waypoint.waypoint.latitude}</h5>
+        <h4>Waypoint {waypoint.name} #{waypoint.number}</h4>
+        <h5>Longitude: {waypoint.longitude}, Latitude: {waypoint.latitude}</h5>
     </>
 }
 

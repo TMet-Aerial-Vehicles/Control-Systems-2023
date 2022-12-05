@@ -10,7 +10,7 @@ function TelemetryReceiver() {
         }
     )
 
-    fetch("http://127.0.0.1:5000/recent-telemetry")
+    fetch("http://127.0.0.1:5000/get-telemetry")
         .then(response => response.json())
         .then(data => {
 
