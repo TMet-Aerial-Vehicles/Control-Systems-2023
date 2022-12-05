@@ -1,5 +1,4 @@
 import React, {useState} from "react";
-import {wait} from "@testing-library/user-event/dist/utils";
 
 function TelemetryReceiver() {
     const [dataObj, setData] = useState(
