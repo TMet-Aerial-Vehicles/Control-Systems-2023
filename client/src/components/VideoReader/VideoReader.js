@@ -72,7 +72,8 @@ function SubmitQR(props) {
     )
 }
 
-function VideoReader(props) {
+// destructuring props example function header
+function VideoReader({opts, setQrReady}) {
     const [qrRaw, setQrRaw] = useState("No Result")
     const [camera, setCamera] = useState(false)
 
@@ -93,7 +94,7 @@ function VideoReader(props) {
                 </Grid>
                 <Grid xs={6}>
                     <p className='reader-text'>{qrRaw}</p>
-                    <SubmitQR qrRaw={qrRaw} opts={props.opts} setQrReady={props.setQrReady}/>
+                    <SubmitQR qrRaw={qrRaw} opts={opts} setQrReady={setQrReady}/>
                 </Grid>
             </Grid>
         </Box>
