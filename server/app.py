@@ -1,10 +1,16 @@
 from flask import Flask, jsonify, request
-
+telem =[{
+    "longtitude" :5,
+    "lat" :6,
+    "height" :69,
+    "time": 1110
+}]
 app = Flask(__name__)
+app.config['CORS-HEADERS'] : 'Content-Type'
+
 
 plan = None
 telemetry = []  # Fixed size queue?
-
 
 @app.route('/', methods=['GET'])
 def hello_world():  # put application's code here
@@ -51,12 +57,16 @@ def get_parsed_qr(qr_type):
 
 @app.route('/recent-telemetry', methods=['GET'])
 def get_recent_telemetry():
-    # Gets latest telemetry info from variable queue
-    # queue.pop() to receive latest telemetry and return to react
-    return jsonify(
-        data={"success": True, 'telemetry': 123},
-        status=200
-    )
+    response = jsonify(data = telem[-1],            
+        succes = "200")
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    return response 
+    
+@app.route('/set-telemetry', methods=['POST'])
+def set_telemetry():
+    return("yeet")
+    #TODO: make this work
+    
 
 
 @app.route('/manual-command', methods=['POST'])
