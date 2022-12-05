@@ -36,44 +36,44 @@ function Waypoint(waypoint) {
     </>
 }
 
-function QR1Data(qrData) {
+function QR1Data({qrData}) {
     return <>
-        <h1>QR {qrData.qrData.qr_type}</h1>
+        <h1>QR {qrData.qr_type}</h1>
 
         <h2>Routes</h2>
-        {qrData.qrData.qr_data.routes !== undefined ?
-            qrData.qrData.qr_data.routes.map((waypoint) => {
+        {qrData.qr_data.routes !== undefined ?
+            qrData.qr_data.routes.map((waypoint) => {
                 return <Waypoint key={waypoint.number} waypoint={waypoint}/>
             }) : null
         }
     </>
 }
 
-function QR2Data(qrData) {
+function QR2Data({qrData}) {
     return <>
-        <h1>QR {qrData.qrData.qr_type}</h1>
+        <h1>QR {qrData.qr_type}</h1>
 
         <h2>Boundaries</h2>
-        {qrData.qrData.qr_data.boundaries !== undefined ?
-            qrData.qrData.qr_data.boundaries.map((waypoint) => {
+        {qrData.qr_data.boundaries !== undefined ?
+            qrData.qr_data.boundaries.map((waypoint) => {
                 return <Waypoint key={waypoint.number} waypoint={waypoint}/>
             }) : null
         }
         <br/>
         <h2>Rejoin at Waypoint:</h2>
-        {qrData.qrData.qr_data.rejoin_waypoint !== undefined ? (
-            <Waypoint key={qrData.qrData.qr_data.rejoin_waypoint.number} waypoint={qrData.qrData.qr_data.rejoin_waypoint}/>
+        {qrData.qr_data.rejoin_waypoint !== undefined ? (
+            <Waypoint key={qrData.qr_data.rejoin_waypoint.number} waypoint={qrData.qr_data.rejoin_waypoint}/>
         ) : null}
     </>
 }
 
-function QR3Data(qrData) {
+function QR3Data({qrData}) {
     return <>
-        <h1>QR {qrData.qrData.qr_type}</h1>
+        <h1>QR {qrData.qr_type}</h1>
 
         <h2>Routes</h2>
-        {qrData.qrData.qr_data.routes !== undefined ?
-            qrData.qrData.qr_data.routes.map((waypoint) => {
+        {qrData.qr_data.routes !== undefined ?
+            qrData.qr_data.routes.map((waypoint) => {
                 return <Waypoint key={waypoint.number} waypoint={waypoint}/>
             }) : null
         }
