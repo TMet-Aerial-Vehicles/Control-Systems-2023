@@ -7,7 +7,7 @@ function TelemetryReceiver() {
             longitude: "Longitude",
             latitude: "Latitude",
             height: "Height",
-            time: "Time"
+            timestamp: "Time"
         }
     )
 
@@ -20,7 +20,7 @@ function TelemetryReceiver() {
                 longitude: data.data.longitude,
                 latitude: data.data.latitude,
                 height: data.data.height,
-                time: data.data.time
+                timestamp: data.data.timestamp
             })
 
         })
@@ -29,7 +29,7 @@ function TelemetryReceiver() {
             <h1>Longitude:{dataObj.longitude}</h1>
             <h1>Latitude:{dataObj.latitude}</h1>
             <h1>Height:{dataObj.height}</h1>
-            <h1>Time:{dataObj.time}</h1>
+            <h1>Time:{dataObj.timestamp}</h1>
         </>
     )
 }

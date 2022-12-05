@@ -1,16 +1,19 @@
 from flask import Flask, jsonify, request
+from collections import deque
 
-telem = [{
-    "longitude": 5,
-    "latitude": 6,
-    "height": 69,
-    "time": 1110
-}]
+
 app = Flask(__name__)
 app.config['CORS-HEADERS']: 'Content-Type'
 
-plan = None
-telemetry = []  # Fixed size queue?
+
+# Fixed size Queue to store telemetry
+telemetry = deque([],  maxlen=10)
+telemetry.append({
+    "longitude": 0,
+    "latitude": 0,
+    "height": 0,
+    "timestamp": 0
+})
 
 
 @app.route('/', methods=['GET'])
@@ -58,7 +61,7 @@ def get_parsed_qr(qr_type):
 
 @app.route('/recent-telemetry', methods=['GET'])
 def get_recent_telemetry():
-    response = jsonify(data=telem[-1],
+    response = jsonify(data=telemetry[-1],
                        success="200")
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
@@ -66,8 +69,24 @@ def get_recent_telemetry():
 
 @app.route('/set-telemetry', methods=['POST'])
 def set_telemetry():
-    return ("yeet")
-    # TODO: make this work
+
+    # Access POST telemetry
+    json_r = request.get_json()
+    longitude = int(json_r["longitude"]) if "longitude" in json_r else None
+    latitude = int(json_r["latitude"]) if "latitude" in json_r else None
+    height = int(json_r["height"]) if "height" in json_r else None
+    timestamp = int(json_r["timestamp"]) if "timestamp" in json_r else None
+
+    # Verify and Update Telemetry
+    if longitude and latitude and height and timestamp:
+        telemetry.append({
+            "longitude": longitude,
+            "latitude": latitude,
+            "height": height,
+            "timestamp": timestamp
+        })
+        return {"success": True, "message": "Telemetry Updated"}
+    return {"success": False, "message": "Missing Payload Values"}
 
 
 @app.route('/manual-command', methods=['POST'])
