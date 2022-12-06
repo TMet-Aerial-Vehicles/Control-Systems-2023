@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request
 from collections import deque
 
 
+from qr import AllQr
+
 app = Flask(__name__)
 app.config['CORS-HEADERS']: 'Content-Type'
 
@@ -15,10 +17,19 @@ telemetry.append({
     "timestamp": 0
 })
 
+# Need to store last command sent
+# Button to resume/resend last command (in case of controller invention)
+# Controller can shift around blockage
+# Website can resend last command to resume
+
+# Instantiate and setup QR System
+QR_LST = AllQr()
+
 
 @app.route('/', methods=['GET'])
-def hello_world():  # put application's code here
-    return "Hello World!"
+@app.route('/home', methods=['GET'])
+def home():
+    return "CS-Ground Flask Server"
 
 
 @app.route('/testing', methods=['GET'])
@@ -36,15 +47,25 @@ def task_2():
     return
 
 
-@app.route('/validate-qr', methods=['POST'])
-def validate_qr():
+@app.route('/process-qr', methods=['POST'])
+def process_qr():
     # Accepts 2 form parameters, raw_qr_string and qr_type (enum)
-    # Checks format of raw_qr_string if it conforms to the type
-    # Saves QR formatted class to variable
-    # Returns success if valid
-    jsonResponse = request.get_json()  # parsable dictionary
-    print(jsonResponse)
-    return {'status': 'SUCCESS'}
+    # Process raw_qr_string if it conforms to the expected format of qr_type
+    # Saves QR formatted class to QR_LST
+    json_r = request.get_json()  # parsable dictionary
+    print(f"Received: {json_r}")
+
+    # Access POST request parameters
+    raw_qr_str = json_r["raw_qr_string"] if "raw_qr_string" in json_r else None
+    qr_type = int(json_r["qr_type"]) if "qr_type" in json_r else None
+
+    # QR Processing
+    if raw_qr_str and qr_type:
+        if QR_LST.qrs[qr_type - 1].is_valid(raw_qr_str):
+            return QR_LST.qrs[qr_type - 1].process(raw_qr_str)
+        return {"success": False, "message": f"Invalid QR {qr_type} Format"}
+
+    return {"success": False, "message": "Missing Payload Values"}
 
 
 @app.route('/get_parsed_qr/<qr_type>', methods=['GET'])
@@ -52,17 +73,22 @@ def get_parsed_qr(qr_type):
     # Accepts qr_type
     # Checks if that qr is set in variable
     # Returns success and qr data if found
-    return {
-        'status': 'SUCCESS',
-        'qr_type': qr_type,
-        'qr_data': ""
-    }
+    if 1 <= int(qr_type) <= 3:
+        return {
+            "success": True,
+            "qr_type": qr_type,
+            "qr_data": QR_LST.qrs[int(qr_type) - 1].convert_to_dict()
+        }
+    else:
+        return {
+            "success": False,
+            "message": "Invalid QR Type"
+        }
 
 
-@app.route('/recent-telemetry', methods=['GET'])
-def get_recent_telemetry():
-    response = jsonify(data=telemetry[-1],
-                       success="200")
+@app.route('/get-telemetry', methods=['GET'])
+def get_telemetry():
+    response = jsonify(data=telemetry[-1], success="200")
     response.headers.add('Access-Control-Allow-Origin', '*')
     return response
 

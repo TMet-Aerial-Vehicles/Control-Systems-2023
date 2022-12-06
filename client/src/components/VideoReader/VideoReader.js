@@ -43,11 +43,11 @@ function SubmitQR(props) {
         setQrType(event.target.value)
     }
     const onSubmit = () => {
-        axios.post('/validate-qr', {
+        axios.post('/process-qr', {
             raw_qr_string: props.qrRaw,
             qr_type: qrType
         }).then(res => {
-            console.log(res.data)
+            props.setQrReady(qrType);
         })
     }
 
@@ -62,7 +62,7 @@ function SubmitQR(props) {
                         onChange={handleChange}
                     >
                         {props.opts !== undefined ? props.opts.map((elem) => {
-                            return <MenuItem value={elem.value}>{elem.text}</MenuItem>
+                            return <MenuItem key={elem.value} value={elem.value}>{elem.text}</MenuItem>
                         }): null}
                     </Select>
             </FormControl>
@@ -71,7 +71,8 @@ function SubmitQR(props) {
     )
 }
 
-function VideoReader(props) {
+// destructuring props example function header
+function VideoReader({opts, setQrReady}) {
     const [qrRaw, setQrRaw] = useState("No Result")
     const [camera, setCamera] = useState(false)
 
@@ -92,7 +93,7 @@ function VideoReader(props) {
                 </Grid>
                 <Grid xs={6}>
                     <p className='reader-text'>{qrRaw}</p>
-                    <SubmitQR qrRaw={qrRaw} opts={props.opts}/>
+                    <SubmitQR qrRaw={qrRaw} opts={opts} setQrReady={setQrReady}/>
                 </Grid>
             </Grid>
         </Box>
