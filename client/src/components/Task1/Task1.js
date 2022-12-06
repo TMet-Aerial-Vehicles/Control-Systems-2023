@@ -21,7 +21,7 @@ function Task1() {
         minHeight: '40vh'
       }));
 
-    const [qrReady, setQrReady] = useState("0");
+    const [qrReady, setQrReady] = useState(0);
     return (
         <Box sx={{ flexGrow: 1 }} className="Task1">
             <Grid container spacing={2}>
@@ -41,8 +41,8 @@ function Task1() {
                     <Item>
                         <Grid container>
                             {/* Display Processed QR Data */}
-                            <Grid item xs={6}><QRData qrType="1" qrReady={qrReady === "1"}/></Grid>
-                            <Grid item xs={6}><QRData qrType="2" qrReady={qrReady === "2"}/></Grid>
+                            <Grid item xs={6}><QRData qrType="1" qrReady={qrReady}/></Grid>
+                            <Grid item xs={6}><QRData qrType="2" qrReady={qrReady}/></Grid>
                         </Grid>
                     </Item>
                 </Grid>
