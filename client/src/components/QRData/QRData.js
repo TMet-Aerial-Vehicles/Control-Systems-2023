@@ -6,10 +6,8 @@ function QRData(props) {
     const [qrData, setQrData] = useState({"success": false, "qr_type": "", "qr_data": {"is_found": false}});
 
     useEffect(() => {
-        console.log(props.qrReady)
         axios.get(`/get_parsed_qr/${props.qrType}`)
         .then((response) => {
-            console.log(response.data);
             setQrData(response.data)
         })
         .catch(error => console.error(`Error: ${error}`));

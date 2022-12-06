@@ -47,7 +47,6 @@ function SubmitQR(props) {
             raw_qr_string: props.qrRaw,
             qr_type: qrType
         }).then(res => {
-            console.log(res.data);
             props.setQrReady(qrType);
         })
     }
