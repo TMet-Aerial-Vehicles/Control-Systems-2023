@@ -1,21 +1,15 @@
-from flask import Flask, jsonify, request
-from collections import deque
-
+from flask import Flask, request
+from flask_cors import CORS
+from flask_socketio import SocketIO
 
 from qr import AllQr
+from telemetry import TelemetryReceiver
 
 app = Flask(__name__)
-app.config['CORS-HEADERS']: 'Content-Type'
+CORS(app)
 
-
-# Fixed size Queue to store telemetry
-telemetry = deque([],  maxlen=10)
-telemetry.append({
-    "longitude": 0,
-    "latitude": 0,
-    "height": 0,
-    "timestamp": 0
-})
+# Create Server using socket
+socketio = SocketIO(app)
 
 # Need to store last command sent
 # Button to resume/resend last command (in case of controller invention)
@@ -25,6 +19,8 @@ telemetry.append({
 # Instantiate and setup QR System
 QR_LST = AllQr()
 
+# Instantiate a Telemetry Storage System
+telemetry_recv = TelemetryReceiver()
 
 @app.route('/', methods=['GET'])
 @app.route('/home', methods=['GET'])
@@ -85,14 +81,6 @@ def get_parsed_qr(qr_type):
             "message": "Invalid QR Type"
         }
 
-
-@app.route('/get-telemetry', methods=['GET'])
-def get_telemetry():
-    response = jsonify(data=telemetry[-1], success="200")
-    response.headers.add('Access-Control-Allow-Origin', '*')
-    return response
-
-
 @app.route('/set-telemetry', methods=['POST'])
 def set_telemetry():
 
@@ -105,12 +93,16 @@ def set_telemetry():
 
     # Verify and Update Telemetry
     if longitude and latitude and height and timestamp:
-        telemetry.append({
+        new_telem = {
             "longitude": longitude,
             "latitude": latitude,
             "height": height,
             "timestamp": timestamp
-        })
+        }
+        # Notify Client with New Data
+        socketio.emit("telemetry", new_telem)
+        # Log Data Received
+        telemetry_recv.log_data(new_telem)
         return {"success": True, "message": "Telemetry Updated"}
     return {"success": False, "message": "Missing Payload Values"}
 
