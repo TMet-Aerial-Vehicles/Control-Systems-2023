@@ -3,13 +3,10 @@ from flask_cors import CORS
 from flask_socketio import SocketIO
 
 from qr import AllQr
-from telemetry import TelemetryReceiver
+from telemetry import TelemetryController
 
 app = Flask(__name__)
 CORS(app)
-
-# Create Server using socket
-socketio = SocketIO(app)
 
 # Need to store last command sent
 # Button to resume/resend last command (in case of controller invention)
@@ -19,8 +16,8 @@ socketio = SocketIO(app)
 # Instantiate and setup QR System
 QR_LST = AllQr()
 
-# Instantiate a Telemetry Storage System
-telemetry_recv = TelemetryReceiver()
+# Instantiate a Telemetry Controller
+telem_control = TelemetryController(SocketIO(app))
 
 @app.route('/', methods=['GET'])
 @app.route('/home', methods=['GET'])
@@ -81,30 +78,17 @@ def get_parsed_qr(qr_type):
             "message": "Invalid QR Type"
         }
 
+@app.route('/get-telemetry', methods=['GET'])
+def get_telemetry():
+    return telem_control.get_recent_data()
+
 @app.route('/set-telemetry', methods=['POST'])
 def set_telemetry():
 
     # Access POST telemetry
     json_r = request.get_json()
-    longitude = int(json_r["longitude"]) if "longitude" in json_r else None
-    latitude = int(json_r["latitude"]) if "latitude" in json_r else None
-    height = int(json_r["height"]) if "height" in json_r else None
-    timestamp = int(json_r["timestamp"]) if "timestamp" in json_r else None
-
-    # Verify and Update Telemetry
-    if longitude and latitude and height and timestamp:
-        new_telem = {
-            "longitude": longitude,
-            "latitude": latitude,
-            "height": height,
-            "timestamp": timestamp
-        }
-        # Notify Client with New Data
-        socketio.emit("telemetry", new_telem)
-        # Log Data Received
-        telemetry_recv.log_data(new_telem)
-        return {"success": True, "message": "Telemetry Updated"}
-    return {"success": False, "message": "Missing Payload Values"}
+    # Process data, and notify event subscribers
+    return telem_control.extract_and_notify(json_r)
 
 
 @app.route('/manual-command', methods=['POST'])

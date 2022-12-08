@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, {useEffect, useState} from "react";
 import io from "socket.io-client"
 
@@ -7,6 +8,7 @@ function TelemetryReceiver() {
     const [dataObj, setData] = useState(
         ""
     )
+    // Setup Event Subscription
     useEffect(() => {
         socket.on("telemetry", msg => {
             console.log(msg)
@@ -17,7 +19,13 @@ function TelemetryReceiver() {
             socket.off('telemetry');
           };
     }, []);
-
+    // Pull Latest Telemetry on Re-Render
+    useEffect(() => {
+        axios.get('/get-telemetry')
+            .then((res) => {
+                setData(res.data)
+            })
+    }, [])
     
     return (
         <>
