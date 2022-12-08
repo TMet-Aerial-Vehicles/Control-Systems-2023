@@ -1,4 +1,5 @@
 from collections import deque
+from datetime import datetime
 from flask_socketio import SocketIO
 
 class TelemetryController:
@@ -18,7 +19,7 @@ class TelemetryController:
         longitude = int(json_r["longitude"]) if "longitude" in json_r else None
         latitude = int(json_r["latitude"]) if "latitude" in json_r else None
         height = int(json_r["height"]) if "height" in json_r else None
-        timestamp = int(json_r["timestamp"]) if "timestamp" in json_r else None
+        timestamp = json_r["timestamp"] if "timestamp" in json_r else None
 
         # Verify and Update Telemetry
         if longitude and latitude and height and timestamp:
