@@ -11,7 +11,6 @@ function TelemetryReceiver() {
     // Setup Event Subscription
     useEffect(() => {
         socket.on("telemetry", msg => {
-            console.log(msg)
             setData(msg)
         })
         // Listener cleanup after setup
