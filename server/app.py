@@ -1,12 +1,10 @@
 from flask import Flask, request
-from flask_cors import CORS
 from flask_socketio import SocketIO
 
 from qr import AllQr
 from telemetry import TelemetryController
 
 app = Flask(__name__)
-CORS(app)
 
 # Need to store last command sent
 # Button to resume/resend last command (in case of controller invention)
@@ -18,6 +16,7 @@ QR_LST = AllQr()
 
 # Instantiate a Telemetry Controller
 telem_control = TelemetryController(SocketIO(app))
+
 
 @app.route('/', methods=['GET'])
 @app.route('/home', methods=['GET'])
@@ -78,13 +77,14 @@ def get_parsed_qr(qr_type):
             "message": "Invalid QR Type"
         }
 
+
 @app.route('/get-telemetry', methods=['GET'])
 def get_telemetry():
     return telem_control.get_recent_data()
 
+
 @app.route('/set-telemetry', methods=['POST'])
 def set_telemetry():
-
     # Access POST telemetry
     json_r = request.get_json()
     # Process data, and notify event subscribers

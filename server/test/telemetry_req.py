@@ -14,7 +14,7 @@ def spam_telemetry():
     while True:
         sample_data["timestamp"] = f'{datetime.now()}'
         requests.post(url, json=sample_data)
-        time.sleep(0.5) # adjustable time between posts
+        time.sleep(0.05) # adjustable time between posts
 
 if __name__ == '__main__':
     spam_telemetry()
