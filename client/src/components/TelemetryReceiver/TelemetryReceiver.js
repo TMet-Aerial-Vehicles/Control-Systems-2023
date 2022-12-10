@@ -1,28 +1,31 @@
-import React, {useState} from "react";
+import axios from "axios";
+import React, {useEffect, useState} from "react";
+import io from "socket.io-client"
+
+const socket = io('/')
 
 function TelemetryReceiver() {
     const [dataObj, setData] = useState(
-        {
-            longitude: "Longitude",
-            latitude: "Latitude",
-            height: "Height",
-            timestamp: "Time"
-        }
+        ""
     )
-
-    fetch("http://127.0.0.1:5000/get-telemetry")
-        .then(response => response.json())
-        .then(data => {
-
-            setData({
-                ...dataObj,
-                longitude: data.data.longitude,
-                latitude: data.data.latitude,
-                height: data.data.height,
-                timestamp: data.data.timestamp
-            })
-
+    // Setup Event Subscription
+    useEffect(() => {
+        socket.on("telemetry", msg => {
+            setData(msg)
         })
+        // Listener cleanup after setup
+        return () => {
+            socket.off('telemetry');
+          };
+    }, []);
+    // Pull Latest Telemetry on Re-Render
+    useEffect(() => {
+        axios.get('/get-telemetry')
+            .then((res) => {
+                setData(res.data)
+            })
+    }, [])
+    
     return (
         <>
             <h1>Longitude:{dataObj.longitude}</h1>
