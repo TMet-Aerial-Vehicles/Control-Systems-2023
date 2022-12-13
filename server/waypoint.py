@@ -15,6 +15,14 @@ class Waypoint:
         self.longitude = longitude
         self.latitude = latitude
 
+    def __eq__(self, other):
+        if self.number == other.number:
+            return True
+        return False
+
+    def __str__(self):
+        return f"{self.name}"
+
     def to_dict(self):
         """Converts Waypoint object to dictionary
 
