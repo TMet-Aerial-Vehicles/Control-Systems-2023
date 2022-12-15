@@ -14,6 +14,9 @@ all_routes = [r_1, r_2, r_3]
 
 # [Waypoint_Alpha, Waypoint_Charlie, Waypoint_Zulu]
 
+def count_waypoint_occurances(curr_wp: Waypoint, final_waypoints: list[Waypoint]) -> int:
+    return len([wp for wp in final_waypoints if wp.name == curr_wp.name])
+
 
 def get_next_waypoint(current_waypoint: Waypoint, routes: [Waypoint]) -> [(Waypoint, int)]:
     next_possible_waypoints = []
@@ -83,11 +86,17 @@ def calculate_optimized_path(current_waypoint, routes, final_waypoints):
             if route_index != -1:
                 # Doing the route
                 route_completed = routes.pop(route_index)
-                inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, routes, [current_waypoint])
+                inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint])
                 routes.insert(route_index, route_completed)
             else:
-                route_completed = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
-                inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, routes, [current_waypoint])
+                max_wp_threshold = 2
+                if count_waypoint_occurances(next_wp, final_waypoints) < max_wp_threshold:
+                    # If waypoint has not been passed more than twice, go to waypoint (configurable)
+                    route_completed = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
+                    inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint])
+                else:
+                    # skip next_wp option if it has been passed more than twice
+                    continue
 
             inter_ratio = calculate_ratio(inter_reward, inter_distance)
             inter_current_path = (inter_reward + route_completed.reward,
@@ -129,7 +138,9 @@ def task_2(all_routes):
         # Starting Location
         initial_waypoint = WAYPOINT_LST.get_wp_by_name(p_start)
 
-        final_possible_routes[p_start] = calculate_optimized_path(initial_waypoint, all_routes, [])
+        # final_possible_routes[p_start] = calculate_optimized_path(initial_waypoint, all_routes, [initial_waypoint])
+        total_reward, total_dist, final_waypoints = calculate_optimized_path(initial_waypoint, all_routes, [initial_waypoint])
+        final_possible_routes[p_start] = (total_reward, total_dist, [initial_waypoint] + final_waypoints)
 
         # same thing as above
         # calculate max reward, lowest distance for each initial waypoint returned
