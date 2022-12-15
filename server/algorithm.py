@@ -18,7 +18,7 @@ def count_waypoint_occurances(curr_wp: Waypoint, final_waypoints: list[Waypoint]
     return len([wp for wp in final_waypoints if wp.name == curr_wp.name])
 
 
-def get_next_waypoint(current_waypoint: Waypoint, routes: [Waypoint]) -> [(Waypoint, int)]:
+def get_next_waypoint(current_waypoint: Waypoint, routes: list[Waypoint]) -> list[(Waypoint, int)]:
     next_possible_waypoints = []
     for i_route in range(len(routes)):
         if routes[i_route].start_waypoint == current_waypoint:
