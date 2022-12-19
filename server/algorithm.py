@@ -19,9 +19,9 @@ def get_next_waypoint(current_waypoint: Waypoint, routes: [Waypoint]) -> [(Waypo
     next_possible_waypoints = []
     for i_route in range(len(routes)):
         if routes[i_route].start_waypoint == current_waypoint:
-            next_possible_waypoints.append((routes[i_route].end_waypoint, i_route))
+            next_possible_waypoints.append((routes[i_route].end_waypoint, i_route, True))
         else:
-            next_possible_waypoints.append((routes[i_route].start_waypoint, -1))
+            next_possible_waypoints.append((routes[i_route].start_waypoint, i_route, False))
     return next_possible_waypoints
 
 
@@ -56,11 +56,13 @@ def calculate_optimized_path(current_waypoint, routes, final_waypoints):
         # 1 Route left, you are at starting position, complete route
         if routes[0].start_waypoint == current_waypoint:
             # ("Reward for Doing Route[0]", "Distance in Making Route[0]")
-            return routes[0].reward, routes[0].distance, [routes[0].end_waypoint]
+            return routes[0].reward, routes[0].distance, [current_waypoint, routes[0].end_waypoint] + final_waypoints
         else:
             # Not at the starting waypoint as the last route
+            # Go to start, then do route
             inter_dist = calculate_distance(current_waypoint, routes[0].start_waypoint)
-            return routes[0].reward, inter_dist + routes[0].distance, [routes[0].start_waypoint, routes[0].end_waypoint]
+            # return routes[0].reward, inter_dist + routes[0].distance, final_waypoints + [routes[0].start_waypoint, routes[0].end_waypoint]
+            return routes[0].reward, inter_dist + routes[0].distance,  [current_waypoint, routes[0].start_waypoint, routes[0].end_waypoint] + final_waypoints
 
     else:
         # At Lima (current_waypoint)
@@ -75,19 +77,27 @@ def calculate_optimized_path(current_waypoint, routes, final_waypoints):
 
         calculated_optimized_next = {}
         # More unique here
-        for next_wp, route_index in next_possible_wp:
+        for next_wp, route_index, already_there in next_possible_wp:
 
-            if final_waypoints and final_waypoints[-1] == next_wp:
-                continue
+            # if final_waypoints and final_waypoints[-1] == next_wp:
+            #     continue
 
-            if route_index != -1:
+            if already_there:
                 # Doing the route
-                route_completed = routes.pop(route_index)
-                inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, routes, [current_waypoint])
+                updated_routes = routes.copy()
+                route_completed = updated_routes.pop(route_index)
+                inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, updated_routes, [])
                 routes.insert(route_index, route_completed)
             else:
-                route_completed = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
-                inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, routes, [current_waypoint])
+                updated_routes = routes.copy()
+                # Get to next start
+                route_completed_1 = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
+                # Do the next route
+                route_completed = updated_routes.pop(route_index)
+                route_completed.reward += 0
+                route_completed.distance += route_completed_1.distance
+                # inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(route_completed.end_waypoint, updated_routes, [route_completed.end_waypoint])
+                inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(route_completed.end_waypoint, updated_routes, [])
 
             inter_ratio = calculate_ratio(inter_reward, inter_distance)
             inter_current_path = (inter_reward + route_completed.reward,
@@ -130,6 +140,10 @@ def task_2(all_routes):
         initial_waypoint = WAYPOINT_LST.get_wp_by_name(p_start)
 
         final_possible_routes[p_start] = calculate_optimized_path(initial_waypoint, all_routes, [])
+
+        # Add initial waypoint to beginning
+        final_possible_routes[p_start][2].insert(0, initial_waypoint)
+        print(final_possible_routes[p_start])
 
         # same thing as above
         # calculate max reward, lowest distance for each initial waypoint returned
