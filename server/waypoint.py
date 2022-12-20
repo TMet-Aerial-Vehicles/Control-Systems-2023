@@ -40,6 +40,7 @@ class Waypoint:
 
 
 ALL_WAYPOINTS = [
+    Waypoint("Origin", 0, -71.65004924513211, 48.51025560275226),
     Waypoint("Alpha", 1, -71.6375025, 48.5166707),
     Waypoint("Bravo", 2, -71.6317518, 48.5060947),
     Waypoint("Charlie", 3, -71.6340069, 48.4921159),
