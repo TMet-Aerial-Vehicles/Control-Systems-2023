@@ -25,20 +25,17 @@ class FlightPlan:
         dist = calculate_distance(start_wp, end_wp)
         self.distance_travelled += dist
         self.time_accumulated += dist / self.drone_speed
-        
+
         if withoutStart:
-            self.waypoints.append(end_wp)
+            self.waypoints = self.waypoints + [end_wp]
         else:
-            self.waypoints += [start_wp, end_wp]
+            self.waypoints = self.waypoints + [start_wp, end_wp]
 
         if reward:
             self.reward_collected += reward
 
-    def add_route_head(self, start_wp: Waypoint, end_wp: Waypoint, reward: int = None):
-        dist = calculate_distance(start_wp, end_wp)
-        self.distance_travelled += dist
-        self.time_accumulated += (dist / self.drone_speed)
-        self.waypoints.insert(0, end_wp)
-
-        if reward:
-            self.reward_collected += reward
+    def add_route_head(self, reward: float, distance: int, waypoint: Waypoint):
+        self.distance_travelled += distance
+        self.time_accumulated += (distance / self.drone_speed)
+        self.waypoints = [waypoint] + self.waypoints
+        self.reward_collected += reward

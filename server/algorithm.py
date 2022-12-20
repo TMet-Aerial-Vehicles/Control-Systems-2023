@@ -1,5 +1,6 @@
 from waypoint import WAYPOINT_LST, Waypoint
 from route import Route
+from flightplan import FlightPlan
 from utils import calculate_distance
 
 def count_waypoint_occurances(curr_wp: Waypoint, final_waypoints: list[Waypoint]) -> int:
@@ -16,45 +17,41 @@ def get_next_waypoint(current_waypoint: Waypoint, routes: list[Waypoint]) -> lis
     return next_possible_waypoints
 
 
-def compare_optimal_paths(path_1, path_2):
-    # path_1 = (reward_1: float, distance_1: float, ratio_1, waypoints_1: [Waypoint])
-    # path_2 = (reward_2: float, distance_2: float, ratio_2, waypoints_2: [Waypoint])
+def compare_optimal_paths(path_1: FlightPlan, path_2: FlightPlan):
+
     # equal choose money over distance or sm
-    if path_1[2] > path_2[2]:
+    if path_1.ratio > path_2.ratio:
         # Compare path ratios
         return path_1
-    elif path_1[2] == path_2[2]:
+    elif path_1.ratio == path_2.ratio:
         # Equal path ratios, return path with smaller distance travelled
-        if path_1[1] < path_2[1]:
+        if path_1.distance_travelled < path_2.distance_travelled:
             return path_1
 
     return path_2
 
 
-def calculate_ratio(reward, distance):
-    if distance == 0:
-        ratio = 0
-    else:
-        ratio = reward / distance
-    return ratio
-
-
-def calculate_optimized_path(current_waypoint, routes, final_waypoints):
+def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Waypoint], final_waypoints: list[Waypoint]) -> FlightPlan:
     if not routes:
         # No other starting points left
         return 0, 0, []
     elif len(routes) == 1:
-        # Calculate dist to return to origin final_waypoints[0]
-        return_dist = calculate_distance(routes[0].end_waypoint, final_waypoints[0])
+        
         if routes[0].start_waypoint == current_waypoint:
             # 1 Route left, you are at starting position, complete route
-            return routes[0].reward, routes[0].distance + return_dist, [routes[0].end_waypoint, final_waypoints[0]]
+            flightplan = FlightPlan(routes[0].reward, routes[0].distance)
+            # Add path to return to origin
+            flightplan.add_route_tail(routes[0].end_waypoint, final_waypoints[0])
+            return flightplan
         else:
             # Not at the starting waypoint as the last route
-            inter_dist = calculate_distance(current_waypoint, routes[0].start_waypoint)
-            return routes[0].reward, inter_dist + routes[0].distance + return_dist, \
-                [routes[0].start_waypoint, routes[0].end_waypoint, final_waypoints[0]]
-        # ("Reward for Doing Route[0]", "Distance in Completing Route[0] + Return to origin", Waypoints)
+            flightplan = FlightPlan(routes[0].reward, routes[0].distance)
+            # Route added to start of planned route
+            flightplan.add_route_tail(current_waypoint, routes[0].start_waypoint, withoutStart=True)
+            # Add path to return to origin
+            flightplan.add_route_tail(routes[0].end_waypoint, final_waypoints[0])
+
+            return flightplan
 
     else:
         next_possible_wp = get_next_waypoint(current_waypoint, routes)
@@ -66,38 +63,38 @@ def calculate_optimized_path(current_waypoint, routes, final_waypoints):
             if at_start_wp:
                 # Doing the route
                 route_completed = routes.pop(route_index)
-                inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint])
+                flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint])
                 routes.insert(route_index, route_completed)
             else:
                 max_wp_threshold = 2
                 if count_waypoint_occurances(next_wp, final_waypoints) < max_wp_threshold:
                     # If waypoint has not been passed more than twice, go to waypoint (configurable)
                     route_completed = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
-                    inter_reward, inter_distance, inter_waypoints = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint])
+                    flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint])
                 else:
                     # skip next_wp option if it has been passed more than twice
                     continue
 
-            inter_ratio = calculate_ratio(inter_reward, inter_distance)
-            inter_current_path = (inter_reward + route_completed.reward,
-                                  inter_distance + route_completed.distance,
-                                  inter_ratio,
-                                  [next_wp] + inter_waypoints)
+            flightplan.calculate_ratio()
+            flightplan.add_route_head(route_completed.reward,
+                                  route_completed.distance,
+                                  next_wp)
+            
             if next_wp.name in calculated_optimized_next:
                 calculated_optimized_next[next_wp.name] = compare_optimal_paths(calculated_optimized_next[next_wp.name],
-                                                                                inter_current_path)
+                                                                                flightplan)
             else:
-                calculated_optimized_next[next_wp.name] = inter_current_path
-        # Want to maximize reward/distance ratio
+                calculated_optimized_next[next_wp.name] = flightplan
 
         # reward, distance, ratio, waypoints
-        best_path = (-1, 99999, -1/99999, [])
+        best_path = FlightPlan(-1, 99999, [])
+        best_path.calculate_ratio()
 
         for name in calculated_optimized_next:
             reward_distance_values = calculated_optimized_next[name]
             best_path = compare_optimal_paths(best_path, reward_distance_values)
 
-        return best_path[0], best_path[1], best_path[3]
+        return best_path
 
 
 def task_2():
@@ -112,9 +109,9 @@ def task_2():
     r_3 = Route(3, 4, "Alpha", "Zulu", 15, "Comment", 150)
     all_routes = [r_1, r_2, r_3]
 
-    reward, dist, waypoints = calculate_optimized_path(start_wp, all_routes, [start_wp])
-
-    return [start_wp] + waypoints
+    flightplan = calculate_optimized_path(start_wp, all_routes, [start_wp])
+    
+    return flightplan.waypoints
 
 if __name__ == "__main__":
     # sys.setrecursionlimit(5000)
