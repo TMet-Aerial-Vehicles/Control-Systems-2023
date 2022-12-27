@@ -31,7 +31,7 @@ def compare_optimal_paths(path_1: FlightPlan, path_2: FlightPlan):
     return path_2
 
 
-def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Waypoint], final_waypoints: list[Waypoint]) -> FlightPlan:
+def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Waypoint], final_waypoints: list[Waypoint], acc_time: float) -> FlightPlan:
     if not routes:
         # No other starting points left
         return 0, 0, []
@@ -42,6 +42,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Waypoint],
             flightplan = FlightPlan(routes[0].reward, routes[0].distance)
             # Add path to return to origin
             flightplan.add_route_tail(routes[0].end_waypoint, final_waypoints[0])
+            flightplan.return_route()
             return flightplan
         else:
             # Not at the starting waypoint as the last route
@@ -50,6 +51,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Waypoint],
             flightplan.add_route_tail(current_waypoint, routes[0].start_waypoint, withoutStart=True)
             # Add path to return to origin
             flightplan.add_route_tail(routes[0].end_waypoint, final_waypoints[0])
+            flightplan.return_route()
 
             return flightplan
 
@@ -63,14 +65,23 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Waypoint],
             if at_start_wp:
                 # Doing the route
                 route_completed = routes.pop(route_index)
-                flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint])
+                acc_time_update = acc_time + route_completed.distance / FlightPlan.drone_speed
+                if FlightPlan.max_time_in_flight < acc_time:
+                    routes.insert(route_index, route_completed)
+                    continue
+                flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint], acc_time_update)
+                # Complete Route
+                flightplan.complete_route()
                 routes.insert(route_index, route_completed)
             else:
                 max_wp_threshold = 2
                 if count_waypoint_occurances(next_wp, final_waypoints) < max_wp_threshold:
                     # If waypoint has not been passed more than twice, go to waypoint (configurable)
                     route_completed = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
-                    flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint])
+                    acc_time_update = acc_time + route_completed.distance / FlightPlan.drone_speed
+                    if FlightPlan.max_time_in_flight < acc_time:
+                        continue
+                    flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint], acc_time_update)
                 else:
                     # skip next_wp option if it has been passed more than twice
                     continue
@@ -79,6 +90,9 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Waypoint],
             flightplan.add_route_head(route_completed.reward,
                                   route_completed.distance,
                                   next_wp)
+
+            if flightplan.is_low_battery():
+                continue
             
             if next_wp.name in calculated_optimized_next:
                 calculated_optimized_next[next_wp.name] = compare_optimal_paths(calculated_optimized_next[next_wp.name],
@@ -109,8 +123,10 @@ def task_2():
     r_3 = Route(3, 4, "Alpha", "Zulu", 15, "Comment", 150)
     all_routes = [r_1, r_2, r_3]
 
-    flightplan = calculate_optimized_path(start_wp, all_routes, [start_wp])
+    flightplan = calculate_optimized_path(start_wp, all_routes, [start_wp], 0)
+    flightplan.waypoints = [start_wp] + flightplan.waypoints
     
+    print(flightplan.time_accumulated)
     return flightplan.waypoints
 
 if __name__ == "__main__":
