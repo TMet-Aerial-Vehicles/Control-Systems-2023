@@ -1,10 +1,10 @@
 import cv2
 from pyzbar.pyzbar import decode
 
-from server.qr import AllQr
+from server.qr import QrHandler
 
 
-QR_LST = AllQr()
+QR_LST = QrHandler()
 
 
 def test_qr3():
