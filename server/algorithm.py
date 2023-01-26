@@ -4,10 +4,25 @@ from flightplan import FlightPlan
 
 
 def count_waypoint_occurances(curr_wp: Waypoint, final_waypoints: list[Waypoint]) -> int:
+    """Recursive algorithm which builds a route path through all desired waypoints using provided routes
+    and time / distance / reward considerations.
+
+    param curr_wp: current waypoint in route path (Waypoint)
+    param final_waypoints: waypoints traversed as a flight plan is built ([Waypoint])
+    :return: number of occurances of a waypoint in the complete waypoint list
+    """
     return len([wp for wp in final_waypoints if wp.name == curr_wp.name])
 
 
 def get_next_waypoint(current_waypoint: Waypoint, routes: list[Waypoint]) -> list[(Waypoint, int, bool)]:
+    """Build a list of next waypoint options based on the current waypoint and the list of routes
+    remaining to be completed.
+
+    param current_waypoint: current waypoint in route path (Waypoint)
+    param routes: list of routes provided to be completed in final flight plan ([Waypoint])
+    :return: list of next waypoint options containing the next waypoint, index in routes and bool
+    depicting if the completing a route or not
+    """    
     next_possible_waypoints = []
     for i_route in range(len(routes)):
         if routes[i_route].start_waypoint == current_waypoint:
@@ -17,7 +32,13 @@ def get_next_waypoint(current_waypoint: Waypoint, routes: list[Waypoint]) -> lis
     return next_possible_waypoints
 
 
-def compare_optimal_paths(path_1: FlightPlan, path_2: FlightPlan):
+def compare_optimal_paths(path_1: FlightPlan, path_2: FlightPlan) -> FlightPlan:
+    """Compare the pre-computed ratio between two FlightPlan's, returning the best option
+
+    param path_1: Flight plan option with computed ratio (FlightPlan)
+    param path_2: Flight plan option with computed ratio (FlightPlan)
+    :return: FlightPlan with route plan and route specific details (FlightPlan)
+    """
     # equal choose money over distance or sm
     if path_1.ratio > path_2.ratio:
         # Compare path ratios
@@ -30,8 +51,18 @@ def compare_optimal_paths(path_1: FlightPlan, path_2: FlightPlan):
     return path_2
 
 
-def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Waypoint], final_waypoints: list[Waypoint],
+def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], final_waypoints: list[Waypoint],
                              acc_time: float) -> FlightPlan:
+    """Recursive algorithm which builds a route path through all desired waypoints using provided routes
+    and time / distance / reward considerations.
+
+    param current_waypoint: current waypoint in route path (Waypoint)
+    param routes: list of routes provided to be completed in final flight plan ([Waypoint])
+    param final_waypoints: waypoints traversed as a flight plan is built ([Waypoint])
+    param acc_time: time accumulated as routes are completed (float)
+    :return: FlightPlan with route plan and route specific details
+    """
+
     if not routes:
         # No other starting points left
         return FlightPlan()
@@ -166,6 +197,5 @@ def task_2():
 
 
 if __name__ == "__main__":
-    # sys.setrecursionlimit(5000)
     stuff = task_2()
     print(stuff)
