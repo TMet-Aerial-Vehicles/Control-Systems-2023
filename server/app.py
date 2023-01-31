@@ -1,8 +1,11 @@
 from flask import Flask, request
 from flask_socketio import SocketIO
 
-from qr import AllQr
-from telemetry import TelemetryController
+from loggingHandler import setup_logging
+from groundController import GroundController
+
+
+setup_logging()
 
 app = Flask(__name__)
 
@@ -11,11 +14,8 @@ app = Flask(__name__)
 # Controller can shift around blockage
 # Website can resend last command to resume
 
-# Instantiate and setup QR System
-QR_LST = AllQr()
-
-# Instantiate a Telemetry Controller
-telem_control = TelemetryController(SocketIO(app))
+# Instantiate groundController
+groundController = GroundController(SocketIO(app))
 
 
 @app.route('/', methods=['GET'])
@@ -43,21 +43,9 @@ def task_2():
 def process_qr():
     # Accepts 2 form parameters, raw_qr_string and qr_type (enum)
     # Process raw_qr_string if it conforms to the expected format of qr_type
-    # Saves QR formatted class to QR_LST
-    json_r = request.get_json()  # parsable dictionary
-    print(f"Received: {json_r}")
-
-    # Access POST request parameters
-    raw_qr_str = json_r["raw_qr_string"] if "raw_qr_string" in json_r else None
-    qr_type = int(json_r["qr_type"]) if "qr_type" in json_r else None
-
-    # QR Processing
-    if raw_qr_str and qr_type:
-        if QR_LST.qrs[qr_type - 1].is_valid(raw_qr_str):
-            return QR_LST.qrs[qr_type - 1].process(raw_qr_str)
-        return {"success": False, "message": f"Invalid QR {qr_type} Format"}
-
-    return {"success": False, "message": "Missing Payload Values"}
+    # Saves QR formatted class
+    json_response = request.get_json()
+    return groundController.process_qr(json_response)
 
 
 @app.route('/get_parsed_qr/<qr_type>', methods=['GET'])
@@ -65,30 +53,34 @@ def get_parsed_qr(qr_type):
     # Accepts qr_type
     # Checks if that qr is set in variable
     # Returns success and qr data if found
-    if 1 <= int(qr_type) <= 3:
-        return {
-            "success": True,
-            "qr_type": qr_type,
-            "qr_data": QR_LST.qrs[int(qr_type) - 1].convert_to_dict()
-        }
-    else:
-        return {
-            "success": False,
-            "message": "Invalid QR Type"
-        }
+    return groundController.get_qr(qr_type)
 
 
 @app.route('/get-telemetry', methods=['GET'])
 def get_telemetry():
-    return telem_control.get_recent_data()
+    return groundController.get_latest_telemetry()
 
 
 @app.route('/set-telemetry', methods=['POST'])
 def set_telemetry():
     # Access POST telemetry
-    json_r = request.get_json()
+    json_response = request.get_json()
     # Process data, and notify event subscribers
-    return telem_control.extract_and_notify(json_r)
+    return groundController.process_telemetry(json_response)
+
+
+@app.route('/verify-route', methods=['POST'])
+def verify_route():
+    # Verify route received with route command sent
+    json_response = request.get_json()
+    return groundController.verify_route(json_response)
+
+
+@app.route('/verify-command', methods=['POST'])
+def verify_command():
+    # Verify command received with command sent
+    json_response = request.get_json()
+    return groundController.verify_command(json_response)
 
 
 @app.route('/manual-command', methods=['POST'])

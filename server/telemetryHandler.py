@@ -1,12 +1,15 @@
 from collections import deque
 from flask_socketio import SocketIO
 
+from utils import success_dict, error_dict
 
-class TelemetryController:
-    def __init__(self, socketio: SocketIO) -> None:
-        """Initialize TelemetryController object
 
-        :param socketio: web socket for event notification (SocketIO)
+class TelemetryHandler:
+
+    def __init__(self, socket_io: SocketIO) -> None:
+        """Initialize TelemetryHandler object
+
+        :param socket_io: web socket for event notification (SocketIO)
         """
         self.telemetry_data = deque([], maxlen=5)
         self.telemetry_data.append({
@@ -15,10 +18,11 @@ class TelemetryController:
             "height": 0,
             "timestamp": 0
         })
-        self.socketio = socketio
+        self.socket_io = socket_io
 
     def extract_and_notify(self, json_r: dict) -> dict:
-        """Pull out incoming telemetry and validate. Then notify using event socket
+        """Pull out incoming telemetry and validate.
+        Then notify using event socket
 
         :param json_r: incoming json data for processing (dict)
         :return: response object specifying status of telemetry parse
@@ -31,25 +35,25 @@ class TelemetryController:
 
         # Verify and Update Telemetry
         if longitude and latitude and height and timestamp:
-            new_telem = {
+            new_telemetry = {
                 "longitude": longitude,
                 "latitude": latitude,
                 "height": height,
                 "timestamp": timestamp
             }
             # Notify subscribers with new data
-            self.send("telemetry", new_telem)
+            self.send("telemetry", new_telemetry)
 
-            return {"success": True, "message": "Telemetry Updated"}
+            return success_dict("Telemetry Updated")
+        return error_dict("Missing Payload Values")
 
-        return {"success": False, "message": "Missing Payload Values"}
+    def log_data(self, new_telemetry: dict) -> None:
+        """Append to data Queue.
+        When full, oldest data dropped
 
-    def log_data(self, new_telem: dict) -> None:
-        """Append to data Queue, when full drop the oldest elem and append new to end
-
-        :param new_telem: data to be recorded (dict)
+        :param new_telemetry: data to be recorded (dict)
         """
-        self.telemetry_data.append(new_telem)
+        self.telemetry_data.append(new_telemetry)
 
     def send(self, event: str, data: dict) -> None:
         """Send data to all subscribers of an event
@@ -57,7 +61,7 @@ class TelemetryController:
         :param event: event name (str)
         :param data: object to be emitted during event (dict)
         """
-        self.socketio.emit(event, data)
+        self.socket_io.emit(event, data)
         self.log_data(data)
 
     def get_recent_data(self) -> dict:
