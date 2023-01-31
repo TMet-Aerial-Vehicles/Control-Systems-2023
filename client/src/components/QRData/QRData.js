@@ -38,9 +38,9 @@ function QR1Data({qrData}) {
     return <>
         <h1>QR {qrData.qr_type}</h1>
 
-        <h2>Routes</h2>
-        {qrData.qr_data.routes !== undefined ?
-            qrData.qr_data.routes.map((waypoint) => {
+        <h2>Waypoints</h2>
+        {qrData.qr_data.waypoints !== undefined ?
+            qrData.qr_data.waypoints.map((waypoint) => {
                 return <Waypoint key={waypoint.number} waypoint={waypoint}/>
             }) : null
         }

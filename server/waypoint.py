@@ -34,8 +34,8 @@ class Waypoint:
         return {
             "name": self.name,
             "number": self.number,
-            "longitude": self.longitude,
-            "latitude": self.latitude
+            "latitude": self.latitude,
+            "longitude": self.longitude
         }
 
 

@@ -1,5 +1,13 @@
+from enum import Enum
+
 import utils
 from waypoint import WAYPOINT_LST
+
+
+class RouteTypes(Enum):
+    Task_1_Initial_Route = 1
+    Task_1_Update_Route = 2
+    Task_2_Route = 3
 
 
 class Route:

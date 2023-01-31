@@ -2,7 +2,7 @@ import axios from "axios";
 import React, {useEffect, useState} from "react";
 import io from "socket.io-client"
 
-const socket = io('/')
+const socket = io()
 
 function TelemetryReceiver() {
     const [dataObj, setData] = useState(
@@ -25,7 +25,7 @@ function TelemetryReceiver() {
                 setData(res.data)
             })
     }, [])
-    
+
     return (
         <>
             <h1>Longitude:{dataObj.longitude}</h1>

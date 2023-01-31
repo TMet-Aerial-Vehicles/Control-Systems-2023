@@ -25,3 +25,5 @@ htmlcov/
 .coverage
 .coverage.*
 *,cover
+
+/logs/*

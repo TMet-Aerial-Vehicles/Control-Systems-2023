@@ -1,9 +1,10 @@
-from typing import Dict
 from abc import ABC, abstractmethod
 import re
+from enum import Enum
 
 from waypoint import WAYPOINT_LST
 from route import Route
+from utils import success_dict, error_dict
 
 # QR Codes from ConOps
 qr_example_1 = "Follow route Waypoint 3; Waypoint 14; Waypoint 6; Waypoint 12;\
@@ -24,31 +25,13 @@ Route number 2: 6 pers; Delta; Charlie; 5 kg; nil; $50\
 Route number 3: 4 pers; Alpha; Zulu; 15 kg; other comment; $150"
 
 
-def error_dict(message) -> Dict:
-    """Create Dict with success False and error message
-
-    :param message: Message to return with (str)
-    :return: Dictionary with success False and response message
-    """
-    return {
-        "success": False,
-        "message": message
-    }
+class QrTypes(Enum):
+    Task_1_Initial_Qr = 1
+    Task_1_Update_Qr = 2
+    Task_2_Qr = 3
 
 
-def success_dict(message) -> Dict:
-    """Create Dict with success True and success message
-
-    :param message: Message to return with (str)
-    :return: Dictionary with success True and response message
-    """
-    return {
-        "success": True,
-        "message": message
-    }
-
-
-class AllQr:
+class QrHandler:
     """Holds instance of all QR objects"""
 
     def __init__(self):
@@ -67,6 +50,45 @@ class AllQr:
         elif qr_type == 2:
             self.qrs[2] = Qr3()
 
+    def process_qr(self, qr_type: str, raw_qr_str: str):
+        """Process QR, extracting and converting into routes
+
+        :param qr_type: (str) Expected QR Type
+        :param raw_qr_str: (str) Raw data extracted from QR
+        :return: API Response Dict
+        """
+        try:
+            qr_type_int = int(qr_type) - 1
+            if 1 <= qr_type_int <= 3:
+                if self.qrs[qr_type_int].is_valid(raw_qr_str):
+                    return self.qrs[qr_type_int].process(raw_qr_str)
+                return error_dict(f"Invalid QR {qr_type} Format")
+            return error_dict("Invalid QR Type [1-3]")
+        except ValueError:
+            return error_dict("Unable to identify QR Type Format")
+
+    def get_qr(self, qr_type: str, waypoints_as_dicts=True):
+        """Returns the QR object data
+
+        :param qr_type: (str) QR to return
+        :param waypoints_as_dicts: (bool) Return waypoint or route objects as
+                                   dictionaries or as objects
+        :return: API Response dict containing QR data
+        """
+        try:
+            qr_type_int = int(qr_type)
+            if 1 <= qr_type_int <= 3:
+                return {
+                    "success": True,
+                    "qr_type": qr_type,
+                    "qr_data": self.qrs[qr_type_int - 1].convert_to_dict(
+                                                            waypoints_as_dicts)
+                }
+            else:
+                return error_dict("Invalid QR Type [1-3]")
+        except ValueError:
+            return error_dict("Unable to identify QR Type Format")
+
 
 class Qr(ABC):
     """Abstract QR Class"""
@@ -80,11 +102,11 @@ class Qr(ABC):
         pass
 
     @abstractmethod
-    def process(self, raw_str: str) -> Dict:
+    def process(self, raw_str: str) -> dict:
         pass
 
     @abstractmethod
-    def convert_to_dict(self) -> Dict:
+    def convert_to_dict(self, waypoints_as_dict=True) -> dict:
         pass
 
 
@@ -101,7 +123,7 @@ class Qr1(Qr):
     def is_valid(self, raw_str: str) -> bool:
         return True if "Follow route:" in raw_str else False
 
-    def process(self, raw_str: str) -> Dict:
+    def process(self, raw_str: str) -> dict:
         waypoints = []
         if self.is_valid(raw_str):
             self.raw_str = raw_str
@@ -125,12 +147,13 @@ class Qr1(Qr):
         else:
             return error_dict("Invalid QR Code String for QR Type 1")
 
-    def convert_to_dict(self) -> Dict:
+    def convert_to_dict(self, wp_as_dict=True) -> dict:
         return {
             "qr_type": self.qr_type,
             "is_found": self.valid_qr_found,
             "raw_str": self.raw_str,
-            "routes": [route.to_dict() for route in self.waypoints]
+            "waypoints": ([wp.to_dict() for wp in self.waypoints]
+                          if wp_as_dict else [wp for wp in self.waypoints])
         }
 
 
@@ -152,7 +175,7 @@ class Qr2(Qr):
             return True
         return False
 
-    def process(self, raw_str: str) -> Dict:
+    def process(self, raw_str: str) -> dict:
         boundary_waypoints = []
         if self.is_valid(raw_str):
             self.raw_str = raw_str
@@ -183,14 +206,18 @@ class Qr2(Qr):
         else:
             return error_dict("Invalid QR Code String for QR Type 2")
 
-    def convert_to_dict(self) -> Dict:
+    def convert_to_dict(self, wp_as_dict=True) -> dict:
         return {
             "qr_type": self.qr_type,
             "is_found": self.valid_qr_found,
             "raw_str": self.raw_str,
-            "boundaries": [wp.to_dict() for wp in self.boundary_waypoints],
-            "rejoin_waypoint": self.rejoin_waypoint.to_dict() if
-            self.rejoin_waypoint is not None else None
+            # "boundaries": [wp.to_dict() for wp in self.boundary_waypoints],
+            "boundaries": ([wp.to_dict() for wp in self.boundary_waypoints]
+                           if wp_as_dict
+                           else [wp for wp in self.boundary_waypoints]),
+            "rejoin_waypoint": ((self.rejoin_waypoint.to_dict()
+                                 if wp_as_dict else self.rejoin_waypoint)
+                                if self.rejoin_waypoint is not None else None)
         }
 
 
@@ -209,7 +236,7 @@ Route number 3: 4 pers; Alpha; Zulu; 15 kg; other comment; $150
     def is_valid(self, raw_str: str) -> bool:
         return True if "Route number 1:" in raw_str else False
 
-    def process(self, raw_str: str) -> Dict:
+    def process(self, raw_str: str) -> dict:
         routes = []
 
         if self.is_valid(raw_str):
@@ -231,13 +258,15 @@ Route number 3: 4 pers; Alpha; Zulu; 15 kg; other comment; $150
         else:
             return error_dict("Invalid QR Code String for QR Type 3")
 
-    def convert_to_dict(self) -> Dict:
+    def convert_to_dict(self, wp_as_dict=True) -> dict:
         return {
             "qr_type": self.qr_type,
             "is_found": self.valid_qr_found,
             "raw_str": self.raw_str,
-            "routes": [route.to_dict() for route in self.routes]
+            "routes": ([route.to_dict() for route in self.routes]
+                       if wp_as_dict else [route for route in self.routes])
         }
+
 
 def process_route_str(route_str) -> Route:
     """Parse route string to create Route object
