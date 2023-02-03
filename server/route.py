@@ -1,5 +1,6 @@
 from enum import Enum
 
+import utils
 from waypoint import WAYPOINT_LST
 
 
@@ -28,6 +29,8 @@ Route number 3: 4 pers; Alpha; Zulu; 15 kg; other comment; $150"
 
         self.start_waypoint = WAYPOINT_LST.get_wp_by_name(start_waypoint_name)
         self.end_waypoint = WAYPOINT_LST.get_wp_by_name(end_waypoint_name)
+
+        self.distance = utils.calculate_distance(self.start_waypoint, self.end_waypoint)
 
     def to_dict(self):
         """Converts Route object to dictionary
