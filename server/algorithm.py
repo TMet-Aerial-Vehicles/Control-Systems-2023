@@ -176,7 +176,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
         return best_path
 
 
-def task_2():
+def task_2() -> FlightPlan:
     # Sample Starting Point
     start_wp = WAYPOINT_LST.get_wp_by_name("Origin")
 
@@ -192,10 +192,10 @@ def task_2():
     flightplan.waypoints = [start_wp] + flightplan.waypoints
     flightplan.takeoff()
 
-    print(flightplan.time_accumulated)
-    return flightplan.waypoints
+    return flightplan
 
 
 if __name__ == "__main__":
-    stuff = task_2()
-    print(stuff)
+    flightplan = task_2()
+    print(flightplan.waypoints)
+    print(flightplan.distance_travelled)
