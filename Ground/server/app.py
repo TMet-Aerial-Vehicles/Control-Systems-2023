@@ -26,7 +26,7 @@ def home():
 
 @app.route('/testing', methods=['GET'])
 def testing():
-    return {"body": "Hello World!"}
+    return {"body": "Hello World! - Ground"}
 
 
 @app.route('/task-1', methods=['GET'])
