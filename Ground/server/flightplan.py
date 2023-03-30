@@ -8,7 +8,8 @@ class FlightPlan:
     time_to_takeoff = 60.0  # seconds
     time_to_land = 80.0  # seconds
     time_to_load = 10.0  # seconds
-    max_time_on_battery = 1200.0  # seconds
+    max_time_on_battery = 1000.0  # seconds
+    max_time_in_air = 1500.0 # seconds
 
     def __init__(self, reward: float = 0.0, distance: float = 0.0, waypoints: list = []) -> None:
         """Initialize FlightPlan object
