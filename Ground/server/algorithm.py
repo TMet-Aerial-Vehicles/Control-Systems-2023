@@ -2,7 +2,7 @@ from waypoint import WAYPOINT_LST, Waypoint
 from route import Route
 from utils import calculate_distance
 from flightplan import FlightPlan
-
+from route_generator import generate_routes
 
 def count_waypoint_occurances(curr_wp: Waypoint, final_waypoints: list[Waypoint]) -> int:
     """Recursive algorithm which builds a route path through all desired waypoints using provided routes
@@ -189,26 +189,32 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
         return best_path
 
 
-def task_2():
-    # Sample Starting Point
-    start_wp = WAYPOINT_LST.get_wp_by_name("Origin")
+def task_2(all_routes: list[Route]) -> FlightPlan:
+    """Recursive algorithm which builds a route path through all desired waypoints using provided routes
+    and time / distance / reward considerations.
 
-    # Route number 1: 2 pers; Lima; Quebec; 15 kg; obstacle 2 m to NE; $112
-    # Route number 2: 6 pers; Delta; Charlie; 5 kg; nil; $50
-    # Route number 3: 4 pers; Alpha; Zulu; 15 kg; other comment; $150"
-    r_1 = Route(1, 2, "Lima", "Quebec", 15, "Obstacle", 112.0)
-    r_2 = Route(2, 6, "Delta", "Charlie", 5, "nil", 50.0)
-    r_3 = Route(3, 4, "Alpha", "Zulu", 15, "Comment", 150.0)
-    all_routes = [r_1, r_2, r_3]
+    param routes: list of routes provided to be completed in final flight plan ([Waypoint])
+    :return: FlightPlan with route plan and route specific details
+    """
+    start_wp = WAYPOINT_LST.get_wp_by_name("Origin")
 
     flightplan = calculate_optimized_path(start_wp, all_routes, [start_wp], FlightPlan.time_to_takeoff, FlightPlan.time_to_takeoff)
     flightplan.waypoints = [start_wp] + flightplan.waypoints
     flightplan.takeoff()
 
-    print(flightplan.time_accumulated)
-    return flightplan.waypoints
+    return flightplan
 
 
 if __name__ == "__main__":
-    stuff = task_2()
-    print(stuff)
+    # r_1 = Route(1, 2, "Lima", "Quebec", 15, "Obstacle", 112.0)
+    # r_2 = Route(2, 6, "Delta", "Charlie", 5, "nil", 50.0)
+    # r_3 = Route(3, 4, "Alpha", "Zulu", 15, "Comment", 150.0)
+    # r_4 = Route(4, 1, "Oscar", "Golf", 10, "", 70.0)
+    # r_5 = Route(4, 1, "November", "Xray", 10, "", 200.0)
+    all_routes = generate_routes(5)
+    print("------- ROUTES --------")
+    print(all_routes)
+    stuff = task_2(all_routes)
+    print("------- FLIGHTPLAN --------")
+    print(stuff.waypoints)
+    print(stuff.time_accumulated)

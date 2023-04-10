@@ -46,3 +46,9 @@ Route number 3: 4 pers; Alpha; Zulu; 15 kg; other comment; $150"
             "remarks": self.remarks,
             "reward": self.reward
         }
+    
+    def __str__(self):
+        return f"[{self.start_waypoint_name}, {self.end_waypoint_name}, {self.reward}]"
+
+    def __repr__(self) -> str:
+        return f"[{self.start_waypoint_name}, {self.end_waypoint_name}, {self.reward}]"

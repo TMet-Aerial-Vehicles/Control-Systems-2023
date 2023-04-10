@@ -4,12 +4,12 @@ from utils import calculate_distance
 
 class FlightPlan:
     # Tunable Parameters
-    drone_speed = 10.0  # metres / seconds
-    time_to_takeoff = 60.0  # seconds
-    time_to_land = 80.0  # seconds
+    drone_speed = 18.06  # metres / seconds
+    time_to_takeoff = 16.0  # seconds
+    time_to_land = 60.0  # seconds
     time_to_load = 10.0  # seconds
-    max_time_on_battery = 1000.0  # seconds
-    max_time_in_air = 1500.0 # seconds
+    max_time_on_battery = 1500.0  # seconds
+    max_time_in_air = 3000.0 # seconds
 
     def __init__(self, reward: float = 0.0, distance: float = 0.0, waypoints: list = []) -> None:
         """Initialize FlightPlan object
@@ -27,13 +27,6 @@ class FlightPlan:
         self.ratio = 0
         # signal to add a stop at origin for battery swap
         self.origin_head = None
-
-    def calculate_ratio_reward_dist(self) -> None:
-        """Compute ratio using formula reward_earned / distance_traveled"""
-        if self.distance_travelled == 0.0:
-            self.ratio = 0
-        else:
-            self.ratio = self.reward_collected / self.distance_travelled
 
     def calculate_ratio(self) -> None:
         """Compute ratio to maximize reward, while minimizing time and distance"""
