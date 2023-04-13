@@ -12,30 +12,32 @@ def count_waypoint_occurances(curr_wp: Waypoint, final_waypoints: list[Waypoint]
     param final_waypoints: waypoints traversed as a flight plan is built ([Waypoint])
     :return: number of occurances of a waypoint in the complete waypoint list
     """
+    if curr_wp is None:
+        return 0
+    
     return len([wp for wp in final_waypoints if wp.name == curr_wp.name])
 
 
-def get_next_waypoint(current_waypoint: Waypoint, routes: list[Waypoint]) -> list[(Waypoint, int, bool)]:
+def get_next_waypoint_opts(current_waypoint: Waypoint, routes: list[Route]) -> tuple[list, float]:
     """Build a list of next waypoint options based on the current waypoint and the list of routes
     remaining to be completed.
 
     param current_waypoint: current waypoint in route path (Waypoint)
     param routes: list of routes provided to be completed in final flight plan ([Waypoint])
-    :return: list of next waypoint options containing the next waypoint, index in routes and bool
-    depicting if the completing a route or not
+    :return: 1. list of next waypoint options containing the next waypoint, index in routes and bool
+    depicting if the completing a route or not [(Waypoint, int, bool)]. 2. min time to next waypoint (float)
     """    
     next_possible_waypoints = []
     min_dist_to_nextwp = 10000
     for i_route in range(len(routes)):
         if routes[i_route].start_waypoint == current_waypoint:
             next_possible_waypoints.append((routes[i_route].end_waypoint, i_route, True))
-            min_dist_to_nextwp = min(min_dist_to_nextwp, calculate_distance(current_waypoint, routes[i_route].end_waypoint))
+            min_dist_to_nextwp = min(min_dist_to_nextwp, FlightPlan.calculate_distance(current_waypoint, routes[i_route].end_waypoint))
         else:
             next_possible_waypoints.append((routes[i_route].start_waypoint, i_route, False))
-            min_dist_to_nextwp = min(min_dist_to_nextwp, calculate_distance(current_waypoint, routes[i_route].start_waypoint))
+            min_dist_to_nextwp = min(min_dist_to_nextwp, FlightPlan.calculate_distance(current_waypoint, routes[i_route].start_waypoint))
 
     return next_possible_waypoints, min_dist_to_nextwp / FlightPlan.drone_speed
-
 
 def compare_optimal_paths(path_1: FlightPlan, path_2: FlightPlan) -> FlightPlan:
     """Compare the pre-computed ratio between two FlightPlan's, returning the best option
@@ -68,7 +70,8 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
     :return: FlightPlan with route plan and route specific details
     """
 
-    next_possible_wp, min_possible_next_time = get_next_waypoint(current_waypoint, routes)
+    # Extract data from next_wp_predict
+    next_possible_wp, min_possible_next_time = get_next_waypoint_opts(current_waypoint, routes)
 
     if (total_time + min_possible_next_time) >= FlightPlan.max_time_in_air:
         # Max time in air reached
@@ -106,64 +109,63 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
             return flightplan
 
     else:
-        
-        calculated_optimized_next = {}
+
+        route_opt = (-1, True) # route_index, is_completing_route
+        min_ratio = 10000 # ratio = dist / reward
+        for next_wp, route_index, at_start_wp in next_possible_wp:
+            route = routes[route_index]
+            ratio_cr = 10000
+            ratio_ncr = 10000
+            
+            if at_start_wp:
+                # next_wp could complete a route
+                ratio_cr = route.distance / route.reward
+
+            else:
+                # next_wp is the begining of another route
+                if count_waypoint_occurances(next_wp, final_waypoints) < 1:
+                    dist = FlightPlan.calculate_distance(current_waypoint, next_wp)
+                    ratio_ncr = (dist + route.distance) / route.reward
+                else:
+                    continue
+
+            if ratio_cr <= min_ratio:
+                min_ratio = ratio_cr
+                route_opt = (route_index, True)
+            if ratio_ncr < min_ratio:
+                min_ratio = ratio_ncr
+                route_opt = (route_index, False)
+
+        route_index, complete_route = route_opt
+
         # Signal to add a stop at origin before current waypoint
         add_origin_before_route_head = False
 
-        for next_wp, route_index, at_start_wp in next_possible_wp:
+        if(complete_route):
+            # Doing the route current_wp = start, next_wp = end
+            route_completed = routes.pop(route_index)
+            next_wp = route_completed.end_waypoint
 
-            if at_start_wp:
-                # Doing the route
-                route_completed = routes.pop(route_index)
-                acc_time_update = acc_time + (
-                        route_completed.distance / FlightPlan.drone_speed) + FlightPlan.time_to_land + \
-                    FlightPlan.time_to_load + FlightPlan.time_to_takeoff
-                total_time_update = total_time + acc_time_update - acc_time
+            acc_time_update = acc_time + (
+                    route_completed.distance / FlightPlan.drone_speed) + FlightPlan.time_to_land + \
+                FlightPlan.time_to_load + FlightPlan.time_to_takeoff
+            total_time_update = total_time + acc_time_update - acc_time
 
-                if FlightPlan.is_low_battery(acc_time, route_completed.distance, next_wp):
-                    # route will need more battery life, signal to go back to origin
-                    # prior to starting route 
-                    add_origin_before_route_head = True
-                    # reset time accumulated to start with this route only + time from origin to start (s)
-                    acc_time_update = acc_time_update - acc_time + FlightPlan.get_time_from_origin(current_waypoint)
-                    total_time_update += FlightPlan.get_time_from_origin(current_waypoint)
+            if FlightPlan.is_low_battery(acc_time, route_completed.distance, next_wp):
+                # route will need more battery life, signal to go back to origin
+                # prior to starting route 
+                add_origin_before_route_head = True
+                # reset time accumulated to start with this route only + time from origin to start (s)
+                acc_time_update = acc_time_update - acc_time + FlightPlan.get_time_from_origin(current_waypoint)
+                total_time_update += FlightPlan.get_time_from_origin(current_waypoint)
 
-                flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
-                                                      acc_time_update, total_time_update)
-                flightplan.complete_route()
-                routes.insert(route_index, route_completed)
-            else:
-                max_wp_threshold = 1
-                if count_waypoint_occurances(next_wp, final_waypoints) < max_wp_threshold:
-                    # If waypoint has not been passed more than twice, go to waypoint (configurable)
-                    route_completed = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
-                    # Current accumulated time plus time to next waypoint
-                    acc_time_update = acc_time + route_completed.distance / FlightPlan.drone_speed
-                    total_time_update = total_time + route_completed.distance / FlightPlan.drone_speed
-
-                    if FlightPlan.is_low_battery(acc_time, route_completed.distance, next_wp):
-                        # route will need more battery life, add a stop at origin before
-                        # going to next_wp
-
-                        # reset time to time taken from refuel to next waypoint
-                        acc_time_update = FlightPlan.get_time_from_origin(next_wp)
-                        total_time_update -= route_completed.distance / FlightPlan.drone_speed
-                        total_time_update += acc_time_update + FlightPlan.get_time_from_origin(current_waypoint)
-                        flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
-                                                              acc_time_update, total_time_update)
-                        # Add signal such that next time a wp is added to the head, origin is added as well
-                        flightplan.append_at_next_head()
-                    else:
-                        flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
-                                                              acc_time_update, total_time_update)
-                else:
-                    # skip next_wp option if it has been passed more than twice
-                    continue
+            flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
+                                                acc_time_update, total_time_update)
+            flightplan.complete_route()
 
             flightplan.add_route_head(route_completed.reward,
-                                      route_completed.distance,
-                                      next_wp)
+                            route_completed.distance,
+                            next_wp)
             flightplan.calculate_ratio()
 
             if add_origin_before_route_head:
@@ -171,22 +173,41 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
                 add_origin_before_route_head = False
                 # Signal for flightplan to add origin before whichever wp is added to the head next
                 flightplan.append_at_next_head()
+            
+            return flightplan
 
-            if next_wp.name in calculated_optimized_next:
-                calculated_optimized_next[next_wp.name] = compare_optimal_paths(calculated_optimized_next[next_wp.name],
-                                                                                flightplan)
+        else:
+            # Not Completing Route, Move to next best starting point for a route
+            route_to_complete = routes[route_index]
+            next_wp = route_to_complete.start_waypoint
+            route_completed = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
+            
+            # Current accumulated time plus time to next waypoint
+            acc_time_update = acc_time + route_completed.distance / FlightPlan.drone_speed
+            total_time_update = total_time + route_completed.distance / FlightPlan.drone_speed
+
+            if FlightPlan.is_low_battery(acc_time, route_completed.distance, next_wp):
+                # route will need more battery life, add a stop at origin before
+                # going to next_wp
+
+                # reset time to time taken from refuel to next waypoint
+                acc_time_update = FlightPlan.get_time_from_origin(next_wp)
+                total_time_update -= route_completed.distance / FlightPlan.drone_speed
+                total_time_update += acc_time_update + FlightPlan.get_time_from_origin(current_waypoint)
+                flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
+                                                        acc_time_update, total_time_update)
+                # Add signal such that next time a wp is added to the head, origin is added as well
+                flightplan.append_at_next_head()
             else:
-                calculated_optimized_next[next_wp.name] = flightplan
+                flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
+                                                        acc_time_update, total_time_update)
+            
+            flightplan.add_route_head(route_completed.reward,
+                                    route_completed.distance,
+                                    next_wp)
+            flightplan.calculate_ratio()
 
-        # reward, distance, ratio, waypoints
-        best_path = FlightPlan(-1, 99999, [])
-        best_path.calculate_ratio()
-
-        for name in calculated_optimized_next:
-            reward_distance_values = calculated_optimized_next[name]
-            best_path = compare_optimal_paths(best_path, reward_distance_values)
-
-        return best_path
+            return flightplan 
 
 
 def task_2(all_routes: list[Route]) -> FlightPlan:
@@ -206,13 +227,14 @@ def task_2(all_routes: list[Route]) -> FlightPlan:
 
 
 if __name__ == "__main__":
-    # r_1 = Route(1, 2, "Lima", "Quebec", 15, "Obstacle", 112.0)
-    # r_2 = Route(2, 6, "Delta", "Charlie", 5, "nil", 50.0)
-    # r_3 = Route(3, 4, "Alpha", "Zulu", 15, "Comment", 150.0)
-    # r_4 = Route(4, 1, "Oscar", "Golf", 10, "", 70.0)
-    # r_5 = Route(4, 1, "November", "Xray", 10, "", 200.0)
-    all_routes = generate_routes(5)
-    print("------- ROUTES --------")
+    r_1 = Route(1, 2, "Lima", "Quebec", 15, "Obstacle", 412.0)
+    r_2 = Route(2, 6, "Quebec", "Charlie", 5, "nil", 50.0)
+    r_3 = Route(3, 4, "Charlie", "Zulu", 15, "Comment", 150.0)
+    r_4 = Route(4, 1, "Charlie", "Golf", 10, "", 70.0)
+    r_5 = Route(4, 1, "November", "Xray", 10, "", 200.0)
+    all_routes = [r_1,r_2,r_3]
+    # all_routes = generate_routes(5)
+    print("--------- ROUTES ----------")
     print(all_routes)
     stuff = task_2(all_routes)
     print("------- FLIGHTPLAN --------")

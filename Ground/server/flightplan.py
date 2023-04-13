@@ -11,6 +11,9 @@ class FlightPlan:
     max_time_on_battery = 1500.0  # seconds
     max_time_in_air = 3000.0 # seconds
 
+    # Static Memory Storage start: {end : {value}}
+    dist_store = {}
+
     def __init__(self, reward: float = 0.0, distance: float = 0.0, waypoints: list = []) -> None:
         """Initialize FlightPlan object
 
@@ -54,7 +57,7 @@ class FlightPlan:
         param without_start: optional parameter to signal only add end_wp (bool)
         """
 
-        dist = calculate_distance(start_wp, end_wp)
+        dist = FlightPlan.calculate_distance(start_wp, end_wp)
         self.distance_travelled += dist
         self.update_time(dist / self.drone_speed)
 
@@ -130,7 +133,7 @@ class FlightPlan:
         :return: True if battery is low
         """
         origin = WAYPOINT_LST.get_wp_by_name("Origin")
-        dist_to_origin = calculate_distance(next_wp, origin)
+        dist_to_origin = FlightPlan.calculate_distance(next_wp, origin)
 
         time_to_next_wp = est_distance / FlightPlan.drone_speed
         time_to_origin_from_next_wp = dist_to_origin / FlightPlan.drone_speed
@@ -150,4 +153,26 @@ class FlightPlan:
         :return: the time required to travel
         """
         origin = WAYPOINT_LST.get_wp_by_name("Origin")
-        return calculate_distance(origin, next_wp) / FlightPlan.drone_speed
+        return FlightPlan.calculate_distance(origin, next_wp) / FlightPlan.drone_speed
+    
+    @staticmethod
+    def calculate_distance(start_wp: Waypoint, end_wp: Waypoint) -> float:
+        """ Wrappers around calculate distance function to check if a stored data 
+        value exist before calling function
+
+        :param start_wp: Waypoint Object
+        :param end_wp: Waypoint Object
+        :return: Calculated distance between start and end
+        """
+        if start_wp.name in FlightPlan.dist_store:
+            if end_wp.name in FlightPlan.dist_store[start_wp.name]:
+                return FlightPlan.dist_store[start_wp.name][end_wp.name]
+        
+        elif end_wp.name in FlightPlan.dist_store:
+            if start_wp.name in FlightPlan.dist_store[end_wp.name]:
+                return FlightPlan.dist_store[end_wp.name][start_wp.name]
+            
+        computed_dist = calculate_distance(start_wp, end_wp)
+        FlightPlan.dist_store[start_wp.name] = {end_wp.name : computed_dist}
+
+        return computed_dist
