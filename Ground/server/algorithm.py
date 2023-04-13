@@ -110,7 +110,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
 
     else:
 
-        route_opt = (-1, True) # route_index, is_completing_route
+        route_opt = (-1, False) # route_index, is_completing_route
         min_ratio = 10000 # ratio = dist / reward
         for next_wp, route_index, at_start_wp in next_possible_wp:
             route = routes[route_index]
@@ -206,7 +206,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
                                     route_completed.distance,
                                     next_wp)
             flightplan.calculate_ratio()
-
+            
             return flightplan 
 
 
@@ -219,7 +219,7 @@ def task_2(all_routes: list[Route]) -> FlightPlan:
     """
     start_wp = WAYPOINT_LST.get_wp_by_name("Origin")
 
-    flightplan = calculate_optimized_path(start_wp, all_routes, [start_wp], FlightPlan.time_to_takeoff, FlightPlan.time_to_takeoff)
+    flightplan = calculate_optimized_path(start_wp, all_routes, [], FlightPlan.time_to_takeoff, FlightPlan.time_to_takeoff)
     flightplan.waypoints = [start_wp] + flightplan.waypoints
     flightplan.takeoff()
 
@@ -231,8 +231,8 @@ if __name__ == "__main__":
     r_2 = Route(2, 6, "Quebec", "Charlie", 5, "nil", 50.0)
     r_3 = Route(3, 4, "Charlie", "Zulu", 15, "Comment", 150.0)
     r_4 = Route(4, 1, "Charlie", "Golf", 10, "", 70.0)
-    r_5 = Route(4, 1, "November", "Xray", 10, "", 200.0)
-    all_routes = [r_1,r_2,r_3]
+    r_5 = Route(5, 1, "November", "Xray", 10, "", 200.0)
+    all_routes = [r_1,r_2,r_3,r_4,r_5]
     # all_routes = generate_routes(5)
     print("--------- ROUTES ----------")
     print(all_routes)
