@@ -88,9 +88,11 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
                 + FlightPlan.time_to_load
             if acc_time_update > FlightPlan.max_time_on_battery:
                 flightplan.append_at_next_head()
+                acc_time_update += FlightPlan.time_to_swap_battery
 
             # Add path to return to origin
             flightplan.add_route_tail_wp_only(routes[0].end_waypoint, final_waypoints[0])
+        
             return flightplan
         else:
             # Not at the starting waypoint as the last route
@@ -103,6 +105,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
                 + FlightPlan.time_to_load
             if acc_time_update > FlightPlan.max_time_on_battery:
                 flightplan.battery_swap()
+                acc_time_update += FlightPlan.time_to_swap_battery
             # Add path to return to origin
             flightplan.add_route_tail_wp_only(routes[0].end_waypoint, final_waypoints[0])
 
@@ -123,11 +126,8 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
 
             else:
                 # next_wp is the begining of another route
-                if count_waypoint_occurances(next_wp, final_waypoints) < 1:
-                    dist = FlightPlan.calculate_distance(current_waypoint, next_wp)
-                    ratio_ncr = (dist + route.distance) / route.reward
-                else:
-                    continue
+                dist = FlightPlan.calculate_distance(current_waypoint, next_wp)
+                ratio_ncr = (dist + route.distance) / route.reward
 
             if ratio_cr <= min_ratio:
                 min_ratio = ratio_cr
@@ -157,7 +157,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
                 add_origin_before_route_head = True
                 # reset time accumulated to start with this route only + time from origin to start (s)
                 acc_time_update = acc_time_update - acc_time + FlightPlan.get_time_from_origin(current_waypoint)
-                total_time_update += FlightPlan.get_time_from_origin(current_waypoint)
+                total_time_update += FlightPlan.get_time_from_origin(current_waypoint) + FlightPlan.time_to_swap_battery
 
             flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
                                                 acc_time_update, total_time_update)
@@ -166,7 +166,6 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
             flightplan.add_route_head(route_completed.reward,
                             route_completed.distance,
                             next_wp)
-            flightplan.calculate_ratio()
 
             if add_origin_before_route_head:
                 # Check for signal to add origin before route
@@ -193,7 +192,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
                 # reset time to time taken from refuel to next waypoint
                 acc_time_update = FlightPlan.get_time_from_origin(next_wp)
                 total_time_update -= route_completed.distance / FlightPlan.drone_speed
-                total_time_update += acc_time_update + FlightPlan.get_time_from_origin(current_waypoint)
+                total_time_update += acc_time_update + FlightPlan.get_time_from_origin(current_waypoint) + FlightPlan.time_to_swap_battery
                 flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
                                                         acc_time_update, total_time_update)
                 # Add signal such that next time a wp is added to the head, origin is added as well
@@ -205,7 +204,6 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
             flightplan.add_route_head(route_completed.reward,
                                     route_completed.distance,
                                     next_wp)
-            flightplan.calculate_ratio()
             
             return flightplan 
 
@@ -232,8 +230,8 @@ if __name__ == "__main__":
     r_3 = Route(3, 4, "Charlie", "Zulu", 15, "Comment", 150.0)
     r_4 = Route(4, 1, "Charlie", "Golf", 10, "", 70.0)
     r_5 = Route(5, 1, "November", "Xray", 10, "", 200.0)
-    all_routes = [r_1,r_2,r_3,r_4,r_5]
-    # all_routes = generate_routes(5)
+    # all_routes = [r_1,r_2,r_3,r_4,r_5]
+    all_routes = generate_routes(10)
     print("--------- ROUTES ----------")
     print(all_routes)
     stuff = task_2(all_routes)

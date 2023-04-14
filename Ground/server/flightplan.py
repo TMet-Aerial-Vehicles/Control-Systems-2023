@@ -10,6 +10,7 @@ class FlightPlan:
     time_to_load = 10.0  # seconds
     max_time_on_battery = 1500.0  # seconds
     max_time_in_air = 3000.0 # seconds
+    time_to_swap_battery = 500 # seconds
 
     # Static Memory Storage start: {end : {value}}
     dist_store = {}
@@ -30,13 +31,6 @@ class FlightPlan:
         self.ratio = 0
         # signal to add a stop at origin for battery swap
         self.origin_head = None
-
-    def calculate_ratio(self) -> None:
-        """Compute ratio to maximize reward, while minimizing time and distance"""
-        if (self.distance_travelled * self.time_accumulated) == 0.0:
-            self.ratio = 0
-        else:
-            self.ratio = self.reward_collected / (self.distance_travelled * self.time_accumulated)
 
     def add_route_tail_wp_only(self, start_wp: Waypoint, end_wp: Waypoint) -> None:
         """Add a full route to the waypoints list
@@ -120,6 +114,7 @@ class FlightPlan:
         origin = WAYPOINT_LST.get_wp_by_name("Origin")
         dist_to_origin = calculate_distance(self.waypoints[0], origin)
         self.add_route_head(0.0, dist_to_origin, origin)
+        self.update_time(FlightPlan.time_to_swap_battery)
 
     # Static Methods
     @staticmethod
