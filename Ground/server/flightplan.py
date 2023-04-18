@@ -31,6 +31,8 @@ class FlightPlan:
         self.ratio = 0
         # signal to add a stop at origin for battery swap
         self.origin_head = None
+        # store flight instructions
+        self.instructions = []
 
     def add_route_tail_wp_only(self, start_wp: Waypoint, end_wp: Waypoint) -> None:
         """Add a full route to the waypoints list
