@@ -2,7 +2,8 @@
 # Sets up required handlers and managers
 # Called by endpoint requests and propagates processing to handlers
 import logging
-
+import os
+import configparser
 from flask_socketio import SocketIO
 
 from qr import QrHandler, QrTypes
@@ -10,10 +11,12 @@ from route import RouteTypes
 from telemetryHandler import TelemetryHandler
 from boundaryHandler import BoundaryHandler
 from commandManager import CommandManager
-from loggingHandler import setup_logging
-from utils import success_dict, error_dict
+from Shared.loggingHandler import setup_logging
+from Shared.shared_utils import success_dict, error_dict
 
-setup_logging()
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__), '../..', 'config.ini'))
+setup_logging(config['Ground']['App_Name'])
 
 
 class GroundController:
@@ -110,7 +113,6 @@ class GroundController:
             mismatched_log = f"Mismatched Route from Flight: \n" \
                 f"\t Received: {json_response['routes']}\n" \
                 f"\t Sent: {self.command_manager.get_sent_command()}\n"
-            print(mismatched_log)
             logging.error(mismatched_log)
 
             # Send routes to Flight again

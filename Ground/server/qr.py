@@ -4,7 +4,7 @@ from enum import Enum
 
 from waypoint import WAYPOINT_LST
 from route import Route
-from utils import success_dict, error_dict
+from Shared.shared_utils import success_dict, error_dict
 
 # QR Codes from ConOps
 qr_example_1 = "Follow route Waypoint 3; Waypoint 14; Waypoint 6; Waypoint 12;\
@@ -59,7 +59,7 @@ class QrHandler:
         """
         try:
             qr_type_int = int(qr_type) - 1
-            if 1 <= qr_type_int <= 3:
+            if 0 <= qr_type_int <= 2:
                 if self.qrs[qr_type_int].is_valid(raw_qr_str):
                     return self.qrs[qr_type_int].process(raw_qr_str)
                 return error_dict(f"Invalid QR {qr_type} Format")

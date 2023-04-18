@@ -1,20 +1,20 @@
 from flask import Flask, request
 from flask_socketio import SocketIO
+import configparser
+import os
+import sys
+sys.path.append('../../')
 
-from loggingHandler import setup_logging
+from Shared.loggingHandler import setup_logging
 from groundController import GroundController
 
 
-setup_logging()
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__), '../..', 'config.ini'))
 
 app = Flask(__name__)
 
-# Need to store last command sent
-# Button to resume/resend last command (in case of controller invention)
-# Controller can shift around blockage
-# Website can resend last command to resume
-
-# Instantiate groundController
+setup_logging(config['Ground']['App_Name'])
 groundController = GroundController(SocketIO(app))
 
 
@@ -91,4 +91,7 @@ def manual_command():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(
+        host=config['Ground']['API_Local_IP'],
+        port=int(config['Ground']['API_IP_PORT'])
+    )

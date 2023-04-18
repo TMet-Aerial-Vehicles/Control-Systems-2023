@@ -1,15 +1,21 @@
 # Manager for sending and verifying route commands
 import logging
-
+import configparser
+import requests
+import os
 from qr import QrTypes, QrHandler
 from telemetryHandler import TelemetryHandler
 from route import RouteTypes
 from waypoint import Waypoint
-from flaskClientSocket import FlaskClientSocket
-from loggingHandler import setup_logging
 
-setup_logging()
+from Shared.loggingHandler import setup_logging
 
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__), '../..', 'config.ini'))
+setup_logging(config['Ground']['App_Name'])
+
+FLIGHT_API = f"http://{config['Flight_API']['API_IP_Address']}" + \
+             f":{config['Flight_API']['API_IP_PORT']}"
 # Boolean to email flight plan or send flight plan to drone to execute
 TASK_2_EMAIL_DAY = True
 
@@ -30,18 +36,14 @@ class CommandManager:
         self.backup_command = None
         self.sent_command = None
         self.sent_message = ""
-        self.socket = FlaskClientSocket(1, 8080)
-
-        # TODO: Without Flight/CommunicationRouter, socket connection fails
-        # Requires button on website on whether to flight is initialized or not
-        # self.socket.connect()
 
     def connect_to_socket(self):
         """Start socket connection
 
         :return: True if successful connection, else False
         """
-        return self.socket.connect()
+        # return self.socket.connect()
+        return True
 
     def send_command(self, message):
         """Send message to Flight
@@ -49,7 +51,8 @@ class CommandManager:
         :param message: (str) message to send
         :return: True if successful send, else False
         """
-        status = self.socket.send_message(message)
+        # status = self.socket.send_message(message)
+        status = True
         self.sent_message = message if status else self.sent_message
         return status
 
@@ -58,7 +61,8 @@ class CommandManager:
 
         :return: True if successful send, else False
         """
-        return self.socket.send_message(self.sent_message)
+        # return self.socket.send_message(self.sent_message)
+        return True
 
     def send_initial_route(self):
         pass
@@ -74,15 +78,39 @@ class CommandManager:
         :return:
         """
         qr_response = self.qr_handler.get_qr(str(qr_type.value),
-                                             waypoints_as_dicts=False)
+                                             waypoints_as_dicts=True)
         if not qr_response['success']:
             return
         qr_data = qr_response['qr_data']
 
         if qr_type == QrTypes.Task_1_Initial_Qr:
-            wp_str = ";".join([f"{wp.name, wp.latitude, wp.longitude}"
-                               for wp in qr_data])
-            self.socket.send_message(f"QR1:{wp_str}")
+            # Create route plan
+            plan = [
+                {"Command": "Takeoff", "Details": {"Altitude": 80}}
+            ]
+            for waypoint in qr_data["waypoints"]:
+                plan.append(
+                    {
+                        "Command": "Navigation",
+                        "Details:": {
+                            "Latitude": waypoint["latitude"],
+                            "Longitude": waypoint["longitude"],
+                            "Altitude": 80,
+                            "Name": waypoint["name"]
+                        }
+                    })
+            plan.append({"Command": "RTL"})
+
+            json_route = {"route": plan}
+            self.route = plan
+            print(json_route)
+
+            try:
+                response = requests.post(f"{FLIGHT_API}/set-initial-route",
+                                         json=json_route)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                logging.info(f"Parse Route - Initial Route POST Error:\n\t{e}")
 
         elif qr_type == QrTypes.Task_1_Update_Qr:
             # Maybe BoundaryHandler class should calculate detour?
@@ -90,7 +118,7 @@ class CommandManager:
                                                  qr_data.rejoin_waypoint)
             wp_upd_str = f"{route_update}"
             message = f"QR2:{wp_upd_str}"
-            self.socket.send_message(message)
+            # self.socket.send_message(message)
 
         elif qr_type == QrTypes.Task_2_Qr:
             flight_plan_route = qr_data.routes
@@ -116,7 +144,7 @@ class CommandManager:
                                        f"{route.starting_waypoint}, "
                                        f"{route.end_waypoint}"
                                        for route in flight_plan_route])
-                self.socket.send_message(f"QR3:{routes_str}")
+                # self.socket.send_message(f"QR3:{routes_str}")
 
     def verify_routes(self, route_type: RouteTypes, routes) -> bool:
         """Validate routes with saved routes

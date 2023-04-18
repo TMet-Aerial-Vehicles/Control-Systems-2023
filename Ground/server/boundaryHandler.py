@@ -2,7 +2,7 @@
 # Verifies drone position outside of flying limits
 # and not within given boundary
 
-from utils import success_dict
+from Shared.shared_utils import success_dict
 
 class BoundaryHandler:
 
