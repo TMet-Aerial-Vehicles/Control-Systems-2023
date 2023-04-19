@@ -33,6 +33,8 @@ class FlightPlan:
         self.origin_head = None
         # store flight instructions
         self.instructions = []
+        # store route numbers
+        self.route_plan = []
 
     def add_route_tail_wp_only(self, start_wp: Waypoint, end_wp: Waypoint) -> None:
         """Add a full route to the waypoints list
@@ -117,6 +119,15 @@ class FlightPlan:
         dist_to_origin = calculate_distance(self.waypoints[0], origin)
         self.add_route_head(0.0, dist_to_origin, origin)
         self.update_time(FlightPlan.time_to_swap_battery)
+
+    def generate_email(self) -> dict:
+        route_join = ";".join(map(str, self.route_plan))
+        email_body = f"TMAV;{route_join}"
+        return {
+            "Subject" : "TMAV Flight Plan",
+            "Body" : email_body
+        }
+
 
     # Static Methods
     @staticmethod

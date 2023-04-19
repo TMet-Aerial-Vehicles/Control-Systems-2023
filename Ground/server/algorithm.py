@@ -4,28 +4,30 @@ from utils import calculate_distance
 from flightplan import FlightPlan
 from route_generator import generate_routes
 
-def is_route(start_wp: Waypoint, end_wp: Waypoint, routes: list[Route]) -> bool:
-    # print(start_wp.name + ", " + end_wp.name)
+def is_route(start_wp: Waypoint, end_wp: Waypoint, routes: list[Route]) -> tuple[bool, int]:
     for route in routes:
         if route.start_waypoint == start_wp and route.end_waypoint == end_wp:
-            return True
-    return False
+            return True, route.number
+    return False, -1
 
-def add_route_instructions(waypoints: list[Waypoint], routes: list[Route]) -> list:
+def add_route_instructions(waypoints: list[Waypoint], routes: list[Route]) -> tuple[list, list]:
     instructions = ["Takeoff"]
+    route_plan = []
     i = 1
     while i < len(waypoints):
+        check_route, route_num = is_route(waypoints[i - 1], waypoints[i], routes)
         if waypoints[i].name == "Origin":
             instructions.append(["Land", "Takeoff"])
-        elif is_route(waypoints[i - 1], waypoints[i], routes):
-            # print(waypoints[i], waypoints[i + 1])
+        elif check_route:
+            # Is a route
+            route_plan.append(route_num)
             instructions.extend([["Land", "Load", "Takeoff"]])
         else:
             # Not a route
             instructions.extend(["Fly"])
 
         i += 1
-    return instructions
+    return instructions, route_plan
 
 def count_waypoint_occurances(curr_wp: Waypoint, final_waypoints: list[Waypoint]) -> int:
     """Recursive algorithm which builds a route path through all desired waypoints using provided routes
@@ -244,7 +246,7 @@ def task_2(all_routes: list[Route]) -> FlightPlan:
     flightplan.waypoints = [start_wp] + flightplan.waypoints
     flightplan.takeoff()
 
-    flightplan.instructions = add_route_instructions(flightplan.waypoints, all_routes)
+    flightplan.instructions, flightplan.route_plan = add_route_instructions(flightplan.waypoints, all_routes)
 
     return flightplan
 
@@ -256,14 +258,16 @@ if __name__ == "__main__":
     r_4 = Route(4, 1, "Charlie", "Golf", 10, "", 70.0)
     r_5 = Route(5, 1, "November", "Xray", 10, "", 200.0)
     # all_routes = [r_1,r_2,r_3]
-    all_routes = generate_routes(16)
+    all_routes = generate_routes(5)
     print("--------- ROUTES ----------")
     print(all_routes)
-    stuff = task_2(all_routes)
+    flightplan = task_2(all_routes)
     print("------- FLIGHTPLAN --------")
-    print(stuff.waypoints)
-    # print(stuff.time_accumulated)
-    # print(stuff.instructions)
-    for i in range(len(stuff.waypoints)):
-        print(stuff.waypoints[i].name + " --> " + str(stuff.instructions[i]))
+    print(flightplan.waypoints)
+    print(flightplan.time_accumulated)
+    
+    for i in range(len(flightplan.waypoints)):
+        print(flightplan.waypoints[i].name + " --> " + str(flightplan.instructions[i]))
+
+    print(flightplan.generate_email()["Body"])
 
