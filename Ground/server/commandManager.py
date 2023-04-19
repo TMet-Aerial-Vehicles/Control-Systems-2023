@@ -91,8 +91,8 @@ class CommandManager:
             for waypoint in qr_data["waypoints"]:
                 plan.append(
                     {
-                        "Command": "Navigation",
-                        "Details:": {
+                        "Command": "Navigate",
+                        "Details": {
                             "Latitude": waypoint["latitude"],
                             "Longitude": waypoint["longitude"],
                             "Altitude": 80,

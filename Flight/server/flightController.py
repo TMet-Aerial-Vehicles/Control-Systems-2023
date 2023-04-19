@@ -26,6 +26,9 @@ class FlightController:
 
         # Functionality
         self.route = []
+
+        self.launch = False
+
         self.is_route_updated = False   # check if updated since last check
         self.updated_route = []
 
@@ -75,5 +78,24 @@ class FlightController:
         # Update next route to
         # Set priority command to brake
         # DO NOT RECOMMENCE NEXT COMMAND TILL ROUTE FULLY UPDATED
-
         pass
+
+    def initiate_launch(self):
+        self.launch = True
+        return {"initiate_launch": self.launch}
+
+    def check_for_launch(self):
+        return {"initiate_launch": self.launch}
+
+    def check_for_route_update(self):
+        # TODO: Complete
+        return {
+            "success": True,
+            "route_updated": False
+        }
+
+    def check_for_priority_command(self):
+        return {
+            "success": True,
+            "route_updated": False
+        }

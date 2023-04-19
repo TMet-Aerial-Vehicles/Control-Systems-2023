@@ -4,17 +4,17 @@ import requests
 import time
 import os
 
-from commandHandler import CommandHandler
 from Shared.loggingHandler import setup_logging
-from Flight.server.pixhawkController import PixhawkController
+from Flight.script.pixhawkController import PixhawkController
+from Flight.script.commandHandler import CommandHandler
 
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), '../..', 'config.ini'))
 setup_logging(config['Flight_Script']['App_Name'])
 
-FLIGHT_API = f"http://{config['Ground']['API_IP_Address']}" + \
-             f":{config['Ground']['API_IP_PORT']}"
+FLIGHT_API = f"http://{config['Flight_API']['API_IP_Address']}" + \
+             f":{config['Flight_API']['API_IP_PORT']}"
 
 # Initialize all classes needed:
 logging.info("Initializing Pixhawk Connection")
@@ -23,6 +23,11 @@ logging.info("Initializing CommandHandler")
 commandHandler = CommandHandler(pixhawk)
 logging.info("Initializing Light Controller")
 # - LightController
+
+logging.info("Connecting to Pixhawk")
+pixhawk.connect(config['Flight_Script']['Pixhawk_Device'])
+logging.info("Connecting to Flight API")
+pixhawk.connect_to_flight_api(blocking=True)
 
 
 # Get initial route when ready
@@ -33,14 +38,14 @@ while not initial_route_received:
     try:
         response = requests.get(f"{FLIGHT_API}/get-initial-route")
         response.raise_for_status()
-        if response.json():
+        if response.json() and response.json()["route"] != []:
             route = response.json()["route"]
             logging.info(f"Initial route received:\n\t {route}")
             initial_route_received = True
             # TODO: Validate route
 
     except requests.exceptions.RequestException as e:
-        logging.info("Initial route not received")
+        logging.info(f"Initial route not received {e}")
         time.sleep(5)
 
 
@@ -48,17 +53,18 @@ while not initial_route_received:
 initiate_route = False
 while not initiate_route:
     try:
-        response = requests.get(f"{FLIGHT_API}/check-for-initiate")
+        response = requests.get(f"{FLIGHT_API}/check-for-launch")
         response.raise_for_status()
-        if response.json() and response.json()["initiate"] == True:
+        if response.json() and response.json()["initiate_launch"] == True:
             initiate_route = True
 
     except requests.exceptions.RequestException as e:
         logging.info("Waiting for Initiate")
-        time.sleep(0.5)
+        time.sleep(1)
 
 # TODO: Add Sound
 time.sleep(10)
+print("Launching in 10 seconds")
 logging.info("Launching")
 
 
@@ -73,6 +79,8 @@ while True:
 
     # Send command to Pixhawk
     if not current_command_sent:
+        print("Executing ", current_command)
+        logging.info(f"Executing: {current_command}")
         commandHandler.execute_command(current_command)
         current_command_sent = True
 
@@ -80,7 +88,7 @@ while True:
     try:
         response = requests.get(f"{FLIGHT_API}/check-for-priority-command")
         response.raise_for_status()
-        if response.json():
+        if response.json() and "priority_command" in response.json():
             priority_command = response.json()["priority_command"]
             if priority_command:
                 logging.info(f"Executing Priority Command")
@@ -96,7 +104,7 @@ while True:
         response = requests.get(f"{FLIGHT_API}/check-for-route-update")
         response.raise_for_status()
         if response.json():
-            route_updated = response.json()['Route Updated']
+            route_updated = response.json()['route_updated']
             if route_updated:
                 logging.info("Updated Route Received")
                 route = response.json()['route']
@@ -107,11 +115,15 @@ while True:
 
     # Check if current command completed
     if commandHandler.is_current_command_completed():
+        print("Command Completed")
         if not executing_priority_command:
+            print("Executing next command")
             route_index += 1
         else:
             executing_priority_command = False
         current_command_sent = False
+    else:
+        print("\tCommand not completed")
 
 # Pseudo
 # While route not complete or not error:

@@ -95,8 +95,7 @@ class PixhawkController:
                 time.sleep(3)
 
     def get_command_ack(self):
-        time.sleep(1)
-        cmd_resp = self.vehicle.recv_match(type='COMMAND_ACK', blocking=True)
+        cmd_resp = self.vehicle.recv_match(type='COMMAND_ACK', blocking=True, timeout=10)
         logging.info(f"\t{cmd_resp}")
         return cmd_resp
 

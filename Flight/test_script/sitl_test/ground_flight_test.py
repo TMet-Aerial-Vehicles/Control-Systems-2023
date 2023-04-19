@@ -5,7 +5,7 @@ import requests
 import time
 
 from Shared.loggingHandler import setup_logging
-from Flight.server.pixhawkController import PixhawkController
+from Flight.script.pixhawkController import PixhawkController
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), '../../..', 'config.ini'))

@@ -55,6 +55,12 @@ def get_initial_route():
     return flightController.get_initial_route()
 
 
+@app.route('/launch', methods=['POST'])
+def launch():
+    # Called by Ground
+    return flightController.initiate_launch()
+
+
 @app.route('/check-for-launch', methods=['GET'])
 def check_for_launch():
     # Called by script
@@ -65,6 +71,12 @@ def check_for_launch():
 def check_for_update():
     # Called by script
     return flightController.check_for_route_update()
+
+
+@app.route('/check-for-priority-command', methods=['GET'])
+def check_for_priority_command():
+    # Called by script
+    return flightController.check_for_priority_command()
 
 
 @app.route('/set-detour-route', methods=['POST'])
