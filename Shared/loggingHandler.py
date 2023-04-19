@@ -1,28 +1,28 @@
 import os
 import logging
 from datetime import datetime
-from utils import get_root_dir
+from Shared.shared_utils import get_root_dir
 
-DIRECTORY = get_root_dir()
+# DIRECTORY = get_root_dir()
 
 
-def setup_logging(log_directory='') -> None:
+def setup_logging(log_directory="") -> None:
     """Standardized logging system starter
     Call in every file for logging system to write to same file
 
-    :param log_directory: (str) Custom log path
+    :param log_directory: (str) Custom log directory
     :return: None
     """
+    # Get/Create logging directory path
+    root_path = get_root_dir()
+    log_path = f"{root_path}/logs"
+    log_path += f"/{log_directory}" if log_directory else ""
+    if not os.path.isdir(log_path):
+        os.mkdir(log_path)
+
+    # Setup log filename path
     log_filename = f"log-{datetime.today().strftime('%Y-%m-%d-%H')}.log"
-    if log_directory:
-        if not os.path.isdir(log_directory):
-            os.mkdir(log_directory)
-        log_path = f"{log_directory}/{log_filename}"
-    else:
-        log_path = f"{DIRECTORY}/logs"
-        if not os.path.isdir(log_path):
-            os.mkdir(log_path)
-        log_path += f"/{log_filename}"
+    log_path += f"/{log_filename}"
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG)

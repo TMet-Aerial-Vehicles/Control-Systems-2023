@@ -6,7 +6,7 @@ from geopy import distance
 from waypoint import Waypoint
 
 
-PROJECT_NAME = "CS-Ground"
+PROJECT_NAME = "Control-Systems-2023"
 
 
 def get_root_dir() -> str:
@@ -25,30 +25,6 @@ def get_root_dir() -> str:
             cwd = os.path.dirname(cwd)
             iter_count += 1
     return os.getcwd()
-
-
-def error_dict(message) -> dict:
-    """Create Dict with success False and error message
-
-    :param message: Message to return with (str)
-    :return: Dictionary with success False and response message
-    """
-    return {
-        "success": False,
-        "message": message
-    }
-
-
-def success_dict(message) -> dict:
-    """Create Dict with success True and success message
-
-    :param message: Message to return with (str)
-    :return: Dictionary with success True and response message
-    """
-    return {
-        "success": True,
-        "message": message
-    }
 
 
 def calculate_distance(start_wp: Waypoint, end_wp: Waypoint) -> float:
@@ -75,6 +51,7 @@ def calculate_circle_distance(start_wp: Waypoint, end_wp: Waypoint) -> float:
         (start_wp.latitude, start_wp.longitude),
         (end_wp.latitude, end_wp.longitude)
     ).meters
+
 
 def calculate_geodesic(start_wp: Waypoint, end_wp: Waypoint) -> float:
     """Returns the distance in metres between two Waypoint objects.

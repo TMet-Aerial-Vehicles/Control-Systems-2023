@@ -2,6 +2,8 @@ import logging
 import socket
 from time import sleep
 
+# DEPRECATED
+
 MSG_END = "MSG_END"
 
 

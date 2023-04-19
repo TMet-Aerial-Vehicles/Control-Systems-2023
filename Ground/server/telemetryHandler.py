@@ -1,7 +1,7 @@
 from collections import deque
 from flask_socketio import SocketIO
 
-from utils import success_dict, error_dict
+from Shared.shared_utils import success_dict, error_dict
 
 
 class TelemetryHandler:
@@ -28,13 +28,13 @@ class TelemetryHandler:
         :return: response object specifying status of telemetry parse
         """
 
-        longitude = int(json_r["longitude"]) if "longitude" in json_r else None
-        latitude = int(json_r["latitude"]) if "latitude" in json_r else None
-        height = int(json_r["height"]) if "height" in json_r else None
-        timestamp = json_r["timestamp"] if "timestamp" in json_r else None
+        longitude = json_r["longitude"] if "longitude" in json_r else None
+        latitude = json_r["latitude"] if "latitude" in json_r else None
+        height = json_r["altitude"] if "altitude" in json_r else None
+        timestamp = json_r["time"] if "time" in json_r else None
 
         # Verify and Update Telemetry
-        if longitude and latitude and height and timestamp:
+        if longitude and latitude and timestamp:
             new_telemetry = {
                 "longitude": longitude,
                 "latitude": latitude,
@@ -43,7 +43,6 @@ class TelemetryHandler:
             }
             # Notify subscribers with new data
             self.send("telemetry", new_telemetry)
-
             return success_dict("Telemetry Updated")
         return error_dict("Missing Payload Values")
 
