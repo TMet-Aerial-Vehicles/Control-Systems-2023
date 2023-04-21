@@ -10,7 +10,7 @@ class FlightPlan:
     time_to_load = 10.0  # seconds
     max_time_on_battery = 1500.0  # seconds
     max_time_in_air = 3000.0 # seconds
-    time_to_swap_battery = 500 # seconds
+    time_to_swap_battery = 250 # seconds
 
     # Static Memory Storage start: {end : {value}}
     dist_store = {}

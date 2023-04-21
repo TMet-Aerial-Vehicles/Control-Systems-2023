@@ -1,8 +1,74 @@
 from waypoint import WAYPOINT_LST, Waypoint
 from route import Route
-from utils import calculate_distance
 from flightplan import FlightPlan
 from route_generator import generate_routes
+
+def format_for_execute_command(flightplan: FlightPlan) -> list:
+    command_sequence = []
+    for i in range(len(flightplan.waypoints)):
+        curr_wp = flightplan.waypoints[i]
+        instruction = flightplan.instructions[i]
+
+        if instruction == "Takeoff":
+            cmd = {
+                "Command" : "Takeoff",
+                "Details" : {"Altitude" : 80}
+            }
+            command_sequence.append(cmd)
+
+        elif instruction == "RTL":
+            cmd = {
+                "Command" : "RTL"
+            }
+            command_sequence.append(cmd)
+
+        elif instruction == ["Land", "Load", "Takeoff"]:
+            # Navigate to Waypoint
+            cmd = {
+                "Command" : "Navigate",
+                "Details" : {
+                    "Name" : curr_wp.name,
+                    "Latitude" : curr_wp.latitude,
+                    "Longitude" : curr_wp.longitude,
+                    "Altitude" : 80
+                }
+            }
+            command_sequence.append(cmd)
+
+            # Land Command
+            cmd = {
+                "Command" : "Land"
+            }
+            command_sequence.append(cmd)
+
+            # Hold Command
+            cmd = {
+                "Command" : "Hold",
+                "Details" : {"Time" : FlightPlan.time_to_load}
+            }
+            command_sequence.append(cmd)
+
+            # Takeoff command
+            cmd = {
+                "Command" : "Takeoff",
+                "Details" : {"Altitude" : 80}
+            }
+            command_sequence.append(cmd)
+            
+        elif instruction == "Fly":
+            # Navigate to Waypoint
+            cmd = {
+                "Command" : "Navigate",
+                "Details" : {
+                    "Name" : curr_wp.name,
+                    "Latitude" : curr_wp.latitude,
+                    "Longitude" : curr_wp.longitude,
+                    "Altitude" : 80
+                }
+            }
+            command_sequence.append(cmd)
+
+    return command_sequence
 
 def is_route(start_wp: Waypoint, end_wp: Waypoint, routes: list[Route]) -> tuple[bool, int]:
     for route in routes:
@@ -17,7 +83,7 @@ def add_route_instructions(waypoints: list[Waypoint], routes: list[Route]) -> tu
     while i < len(waypoints):
         check_route, route_num = is_route(waypoints[i - 1], waypoints[i], routes)
         if waypoints[i].name == "Origin":
-            instructions.append(["Land", "Takeoff"])
+            instructions.extend(["RTL"])
         elif check_route:
             # Is a route
             route_plan.append(route_num)
@@ -53,16 +119,16 @@ def get_next_waypoint_opts(current_waypoint: Waypoint, routes: list[Route]) -> t
     depicting if the completing a route or not [(Waypoint, int, bool)]. 2. min time to next waypoint (float)
     """    
     next_possible_waypoints = []
-    min_dist_to_nextwp = 10000
+    max_dist_to_nextwp = 10000
     for i_route in range(len(routes)):
         if routes[i_route].start_waypoint == current_waypoint:
             next_possible_waypoints.append((routes[i_route].end_waypoint, i_route, True))
-            min_dist_to_nextwp = min(min_dist_to_nextwp, FlightPlan.calculate_distance(current_waypoint, routes[i_route].end_waypoint))
+            max_dist_to_nextwp = max(max_dist_to_nextwp, FlightPlan.calculate_distance(current_waypoint, routes[i_route].end_waypoint))
         else:
             next_possible_waypoints.append((routes[i_route].start_waypoint, i_route, False))
-            min_dist_to_nextwp = min(min_dist_to_nextwp, FlightPlan.calculate_distance(current_waypoint, routes[i_route].start_waypoint))
+            max_dist_to_nextwp = max(max_dist_to_nextwp, FlightPlan.calculate_distance(current_waypoint, routes[i_route].start_waypoint))
 
-    return next_possible_waypoints, min_dist_to_nextwp / FlightPlan.drone_speed
+    return next_possible_waypoints, max_dist_to_nextwp / FlightPlan.drone_speed
 
 def compare_optimal_paths(path_1: FlightPlan, path_2: FlightPlan) -> FlightPlan:
     """Compare the pre-computed ratio between two FlightPlan's, returning the best option
@@ -96,9 +162,9 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
     """
 
     # Extract data from next_wp_predict
-    next_possible_wp, min_possible_next_time = get_next_waypoint_opts(current_waypoint, routes)
+    next_possible_wp, max_possible_next_time = get_next_waypoint_opts(current_waypoint, routes)
 
-    if (total_time + min_possible_next_time) >= FlightPlan.max_time_in_air:
+    if (total_time + max_possible_next_time) >= FlightPlan.max_time_in_air:
         # Max time in air reached
         return FlightPlan(waypoints=[WAYPOINT_LST.get_wp_by_name("Origin")])
 
@@ -258,16 +324,18 @@ if __name__ == "__main__":
     r_4 = Route(4, 1, "Charlie", "Golf", 10, "", 70.0)
     r_5 = Route(5, 1, "November", "Xray", 10, "", 200.0)
     # all_routes = [r_1,r_2,r_3]
-    all_routes = generate_routes(5)
+    all_routes = generate_routes(8)
     print("--------- ROUTES ----------")
     print(all_routes)
     flightplan = task_2(all_routes)
     print("------- FLIGHTPLAN --------")
     print(flightplan.waypoints)
     print(flightplan.time_accumulated)
-    
+
     for i in range(len(flightplan.waypoints)):
         print(flightplan.waypoints[i].name + " --> " + str(flightplan.instructions[i]))
 
-    print(flightplan.generate_email()["Body"])
+    # print(flightplan.generate_email()["Body"])
+    commands = format_for_execute_command(flightplan)
+    for command in commands: print(command)
 
