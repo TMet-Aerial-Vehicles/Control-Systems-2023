@@ -2,6 +2,11 @@ from waypoint import WAYPOINT_LST, Waypoint
 from route import Route
 from flightplan import FlightPlan
 from route_generator import generate_routes
+import configparser
+import os
+
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__), '../..', 'config.ini'))
 
 def format_for_execute_command(flightplan: FlightPlan) -> list:
     command_sequence = []
@@ -12,7 +17,7 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
         if instruction == "Takeoff":
             cmd = {
                 "Command" : "Takeoff",
-                "Details" : {"Altitude" : 80}
+                "Details" : {"Altitude" : config["Ground"]["ALTITUDE"]}
             }
             command_sequence.append(cmd)
 
@@ -30,7 +35,7 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
                     "Name" : curr_wp.name,
                     "Latitude" : curr_wp.latitude,
                     "Longitude" : curr_wp.longitude,
-                    "Altitude" : 80
+                    "Altitude" : config["Ground"]["ALTITUDE"]
                 }
             }
             command_sequence.append(cmd)
@@ -51,7 +56,7 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
             # Takeoff command
             cmd = {
                 "Command" : "Takeoff",
-                "Details" : {"Altitude" : 80}
+                "Details" : {"Altitude" : config["Ground"]["ALTITUDE"]}
             }
             command_sequence.append(cmd)
             
@@ -63,7 +68,7 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
                     "Name" : curr_wp.name,
                     "Latitude" : curr_wp.latitude,
                     "Longitude" : curr_wp.longitude,
-                    "Altitude" : 80
+                    "Altitude" : config["Ground"]["ALTITUDE"]
                 }
             }
             command_sequence.append(cmd)
@@ -77,6 +82,15 @@ def is_route(start_wp: Waypoint, end_wp: Waypoint, routes: list[Route]) -> tuple
     return False, -1
 
 def add_route_instructions(waypoints: list[Waypoint], routes: list[Route]) -> tuple[list, list]:
+    """Build route instructions using the generated waypoint list. RTL = Return to Starting Point
+    [Land, Load, Takeoff] = Route Completion Process after Navigating to WP
+    FLY = Only navigate to the WP
+
+    param waypoints: current waypoint in route path ([Waypoint])
+    param routes: routes provided by competition ([Route])
+    :return: list containing instructions for each waypoint, list specifying route completion 
+    order (using route num)
+    """
     instructions = ["Takeoff"]
     route_plan = []
     i = 1
