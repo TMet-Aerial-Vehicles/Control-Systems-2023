@@ -13,7 +13,7 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
     for i in range(len(flightplan.waypoints)):
         curr_wp = flightplan.waypoints[i]
         instruction = flightplan.instructions[i]
-
+# --------------------------------------- TAKEOFF ---------------------------------------
         if instruction == "Takeoff":
             cmd = {
                 "Command" : "Takeoff",
@@ -21,14 +21,78 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
             }
             command_sequence.append(cmd)
 
-        elif instruction == "RTL":
+# --------------------------------------- RTL-CR ---------------------------------------
+        elif instruction == "RTL-CR":
+            # need to [land, load, battery swap, takeoff]
+            # Navigate to Waypoint
             cmd = {
-                "Command" : "RTL"
+                "Command" : "Navigate",
+                "Details" : {
+                    "Name" : curr_wp.name,
+                    "Latitude" : curr_wp.latitude,
+                    "Longitude" : curr_wp.longitude,
+                    "Altitude" : config["Ground"]["ALTITUDE"]
+                }
             }
             command_sequence.append(cmd)
 
-        elif instruction == ["Land", "Load", "Takeoff"]:
+            # Land Command
+            cmd = {
+                "Command" : "Land"
+            }
+            command_sequence.append(cmd)
+
+            # Hold Command
+            cmd = {
+                "Command" : "Hold",
+                "Details" : {"Time" : FlightPlan.time_to_load + FlightPlan.time_to_swap_battery}
+            }
+            command_sequence.append(cmd)
+
+            # Takeoff command
+            cmd = {
+                "Command" : "Takeoff",
+                "Details" : {"Altitude" : config["Ground"]["ALTITUDE"]}
+            }
+            command_sequence.append(cmd)
+
+# --------------------------------------- RTL-BSWP ---------------------------------------
+        elif instruction == "RTL-BSWP":
+            # need to [land, battery swap, takeoff]
             # Navigate to Waypoint
+            cmd = {
+                "Command" : "Navigate",
+                "Details" : {
+                    "Name" : curr_wp.name,
+                    "Latitude" : curr_wp.latitude,
+                    "Longitude" : curr_wp.longitude,
+                    "Altitude" : config["Ground"]["ALTITUDE"]
+                }
+            }
+            command_sequence.append(cmd)
+
+            # Land Command
+            cmd = {
+                "Command" : "Land"
+            }
+            command_sequence.append(cmd)
+
+            # Hold Command
+            cmd = {
+                "Command" : "Hold",
+                "Details" : {"Time" : FlightPlan.time_to_swap_battery}
+            }
+            command_sequence.append(cmd)
+
+            # Takeoff command
+            cmd = {
+                "Command" : "Takeoff",
+                "Details" : {"Altitude" : config["Ground"]["ALTITUDE"]}
+            }
+            command_sequence.append(cmd)
+# --------------------------------------- END / START ---------------------------------------
+        else:
+            # Navigate to Waypoint need to [land, load, takeoff]
             cmd = {
                 "Command" : "Navigate",
                 "Details" : {
@@ -59,19 +123,6 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
                 "Details" : {"Altitude" : config["Ground"]["ALTITUDE"]}
             }
             command_sequence.append(cmd)
-            
-        elif instruction == "Fly":
-            # Navigate to Waypoint
-            cmd = {
-                "Command" : "Navigate",
-                "Details" : {
-                    "Name" : curr_wp.name,
-                    "Latitude" : curr_wp.latitude,
-                    "Longitude" : curr_wp.longitude,
-                    "Altitude" : config["Ground"]["ALTITUDE"]
-                }
-            }
-            command_sequence.append(cmd)
 
     return command_sequence
 
@@ -81,7 +132,7 @@ def is_route(start_wp: Waypoint, end_wp: Waypoint, routes: list[Route]) -> tuple
             return True, route.number
     return False, -1
 
-def add_route_instructions(waypoints: list[Waypoint], routes: list[Route]) -> tuple[list, list]:
+def add_route_instructions(waypoints: list[Waypoint], routes: list[Route], battery_swaps : list[int]) -> tuple[list, list]:
     """Build route instructions using the generated waypoint list. RTL = Return to Starting Point
     [Land, Load, Takeoff] = Route Completion Process after Navigating to WP
     FLY = Only navigate to the WP
@@ -94,17 +145,23 @@ def add_route_instructions(waypoints: list[Waypoint], routes: list[Route]) -> tu
     instructions = ["Takeoff"]
     route_plan = []
     i = 1
+    
     while i < len(waypoints):
         check_route, route_num = is_route(waypoints[i - 1], waypoints[i], routes)
-        if waypoints[i].name == "Origin":
-            instructions.extend(["RTL"])
+        if (waypoints[i].name == FlightPlan.origin.name) and (i in battery_swaps):
+            if check_route:
+                # Complete route and battery swap
+                route_plan.append(route_num)
+                instructions.extend(["RTL-CR"]) # need to [land, load, battery swap, takeoff]
+            else:
+                instructions.extend(["RTL-BSWP"]) # need to [land, battery swap, takeoff]
         elif check_route:
-            # Is a route
+            # Is a route END
             route_plan.append(route_num)
-            instructions.extend([["Land", "Load", "Takeoff"]])
+            instructions.extend(["END"]) # need to [land, load, takeoff]
         else:
-            # Not a route
-            instructions.extend(["Fly"])
+            # Is a route START
+            instructions.extend(["START"]) # need to [land, load, takeoff]
 
         i += 1
     return instructions, route_plan
@@ -180,7 +237,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
 
     if (total_time + max_possible_next_time) >= FlightPlan.max_time_in_air:
         # Max time in air reached
-        return FlightPlan(waypoints=[WAYPOINT_LST.get_wp_by_name("Origin")])
+        return FlightPlan(waypoints=[FlightPlan.origin])
 
     elif len(routes) == 1:
 
@@ -189,15 +246,20 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
             flightplan = FlightPlan(routes[0].reward, routes[0].distance)
 
             # Verify that there is enough battery to complete the final route
-            acc_time_update = acc_time + flightplan.time_accumulated + FlightPlan.time_to_land \
-                + FlightPlan.time_to_load
+            acc_time_update = acc_time + flightplan.time_accumulated + 2 * (FlightPlan.time_to_land \
+                + FlightPlan.time_to_load) + FlightPlan.time_to_takeoff
             if acc_time_update > FlightPlan.max_time_on_battery:
                 flightplan.append_at_next_head()
                 acc_time_update += FlightPlan.time_to_swap_battery
 
             # Add path to return to origin
             flightplan.add_route_tail_wp_only(routes[0].end_waypoint, final_waypoints[0])
-        
+
+            # start procedure
+            flightplan.complete_route()
+            # end procedure
+            flightplan.complete_route()
+            
             return flightplan
         else:
             # Not at the starting waypoint as the last route
@@ -206,14 +268,19 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
             flightplan.add_route_tail(current_waypoint, routes[0].start_waypoint, without_start=True)
 
             # Verify if there is enough battery to travel to start of planned route and complete
-            acc_time_update = acc_time + flightplan.time_accumulated + FlightPlan.time_to_land \
-                + FlightPlan.time_to_load
+            acc_time_update = acc_time + flightplan.time_accumulated + 2 * (FlightPlan.time_to_land \
+                + FlightPlan.time_to_load) + FlightPlan.time_to_takeoff
             if acc_time_update > FlightPlan.max_time_on_battery:
                 flightplan.battery_swap()
                 acc_time_update += FlightPlan.time_to_swap_battery
             # Add path to return to origin
             flightplan.add_route_tail_wp_only(routes[0].end_waypoint, final_waypoints[0])
 
+            # start procedure
+            flightplan.complete_route()
+            # end procedure
+            flightplan.complete_route()
+            
             return flightplan
 
     else:
@@ -250,23 +317,36 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
             # Doing the route current_wp = start, next_wp = end
             route_completed = routes.pop(route_index)
             next_wp = route_completed.end_waypoint
+            rtl_swap = False
 
             acc_time_update = acc_time + (
-                    route_completed.distance / FlightPlan.drone_speed) + FlightPlan.time_to_land + \
-                FlightPlan.time_to_load + FlightPlan.time_to_takeoff
+                    route_completed.distance / FlightPlan.drone_speed) + 2 * (FlightPlan.time_to_land + \
+                FlightPlan.time_to_load + FlightPlan.time_to_takeoff)
             total_time_update = total_time + acc_time_update - acc_time
 
-            if FlightPlan.is_low_battery(acc_time, route_completed.distance, next_wp):
+            if FlightPlan.is_low_battery(acc_time, route_completed.distance, next_wp) or FlightPlan.rtl_swap_battery(current_waypoint, acc_time_update):
                 # route will need more battery life, signal to go back to origin
                 # prior to starting route 
                 add_origin_before_route_head = True
                 # reset time accumulated to start with this route only + time from origin to start (s)
-                acc_time_update = acc_time_update - acc_time + FlightPlan.get_time_from_origin(current_waypoint)
-                total_time_update += FlightPlan.get_time_from_origin(current_waypoint) + FlightPlan.time_to_swap_battery
+                acc_time_update = acc_time_update - acc_time + FlightPlan.get_time_from_origin(current_waypoint) + FlightPlan.time_to_takeoff
+                total_time_update += FlightPlan.get_time_from_origin(current_waypoint) + FlightPlan.time_to_swap_battery + FlightPlan.time_to_takeoff
+
+            elif FlightPlan.rtl_swap_battery(next_wp, acc_time_update):
+                acc_time_update = FlightPlan.time_to_takeoff
+                total_time_update += FlightPlan.time_to_swap_battery + FlightPlan.time_to_takeoff
+                rtl_swap = True
 
             flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
                                                 acc_time_update, total_time_update)
+            
+            # pickup procedure
             flightplan.complete_route()
+            # drop off procedure
+            flightplan.complete_route()
+
+            if rtl_swap:
+                flightplan.append_at_next_head()
 
             flightplan.add_route_head(route_completed.reward,
                             route_completed.distance,
@@ -281,7 +361,7 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
             return flightplan
 
         else:
-            # Not Completing Route, Move to next best starting point for a route
+            # Not Completing Route, Move to next best starting point for a route (assume in air)
             route_to_complete = routes[route_index]
             next_wp = route_to_complete.start_waypoint
             route_completed = Route(-1, 0, current_waypoint.name, next_wp.name, 99999, "", 0)
@@ -290,14 +370,15 @@ def calculate_optimized_path(current_waypoint: Waypoint, routes: list[Route], fi
             acc_time_update = acc_time + route_completed.distance / FlightPlan.drone_speed
             total_time_update = total_time + route_completed.distance / FlightPlan.drone_speed
 
-            if FlightPlan.is_low_battery(acc_time, route_completed.distance, next_wp):
+            if FlightPlan.is_low_battery(acc_time, route_completed.distance, next_wp) or FlightPlan.rtl_swap_battery(next_wp, acc_time_update):
                 # route will need more battery life, add a stop at origin before
                 # going to next_wp
 
                 # reset time to time taken from refuel to next waypoint
-                acc_time_update = FlightPlan.get_time_from_origin(next_wp)
+                acc_time_update = FlightPlan.get_time_from_origin(next_wp) + FlightPlan.time_to_takeoff
                 total_time_update -= route_completed.distance / FlightPlan.drone_speed
-                total_time_update += acc_time_update + FlightPlan.get_time_from_origin(current_waypoint) + FlightPlan.time_to_swap_battery
+                total_time_update += acc_time_update + FlightPlan.get_time_from_origin(current_waypoint) + FlightPlan.time_to_swap_battery \
+                    + FlightPlan.time_to_takeoff
                 flightplan = calculate_optimized_path(next_wp, routes, final_waypoints + [current_waypoint],
                                                         acc_time_update, total_time_update)
                 # Add signal such that next time a wp is added to the head, origin is added as well
@@ -320,13 +401,15 @@ def task_2(all_routes: list[Route]) -> FlightPlan:
     param routes: list of routes provided to be completed in final flight plan ([Waypoint])
     :return: FlightPlan with route plan and route specific details
     """
-    start_wp = WAYPOINT_LST.get_wp_by_name("Origin")
+    start_wp = FlightPlan.origin
 
     flightplan = calculate_optimized_path(start_wp, all_routes.copy(), [], FlightPlan.time_to_takeoff, FlightPlan.time_to_takeoff)
     flightplan.waypoints = [start_wp] + flightplan.waypoints
     flightplan.takeoff()
 
-    flightplan.instructions, flightplan.route_plan = add_route_instructions(flightplan.waypoints, all_routes)
+    flightplan.reformat_battery_indexes()
+
+    flightplan.instructions, flightplan.route_plan = add_route_instructions(flightplan.waypoints, all_routes, flightplan.battery_swap_indexes)
 
     return flightplan
 
@@ -337,19 +420,22 @@ if __name__ == "__main__":
     r_3 = Route(3, 4, "Alpha", "Zulu", 15, "Comment", 150.0)
     r_4 = Route(4, 1, "Charlie", "Golf", 10, "", 70.0)
     r_5 = Route(5, 1, "November", "Xray", 10, "", 200.0)
-    # all_routes = [r_1,r_2,r_3]
+    r_6 = Route(6, 1, "Echo", "Hotel", 10, "", 243.0)
+    r_7 = Route(7, 1, "Bravo", "Golf", 10, "", 43.0)
+    # all_routes = [r_1,r_2,r_3,r_4,r_5,r_6,r_7]
     all_routes = generate_routes(8)
     print("--------- ROUTES ----------")
     print(all_routes)
     flightplan = task_2(all_routes)
     print("------- FLIGHTPLAN --------")
     print(flightplan.waypoints)
+    print(flightplan.battery_swap_indexes)
     print(flightplan.time_accumulated)
 
-    for i in range(len(flightplan.waypoints)):
-        print(flightplan.waypoints[i].name + " --> " + str(flightplan.instructions[i]))
+    # for i in range(len(flightplan.waypoints)):
+    #     print(flightplan.waypoints[i].name + " --> " + str(flightplan.instructions[i]))
 
-    # print(flightplan.generate_email()["Body"])
+    print(flightplan.generate_email()["Body"])
     commands = format_for_execute_command(flightplan)
     for command in commands: print(command)
 

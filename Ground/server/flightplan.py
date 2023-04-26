@@ -12,6 +12,9 @@ class FlightPlan:
     max_time_in_air = 3000.0 # seconds
     time_to_swap_battery = 250 # seconds
 
+    # User configured RTL location
+    origin = WAYPOINT_LST.get_wp_by_name("Alpha")
+
     # Static Memory Storage start: {end : {value}}
     dist_store = {}
 
@@ -35,6 +38,8 @@ class FlightPlan:
         self.instructions = []
         # store route numbers
         self.route_plan = []
+        # store battery swap waypoint index -> From right to left
+        self.battery_swap_indexes = []
 
     def add_route_tail_wp_only(self, start_wp: Waypoint, end_wp: Waypoint) -> None:
         """Add a full route to the waypoints list
@@ -82,7 +87,12 @@ class FlightPlan:
 
         if self.origin_head:
             self.origin_head = None
-            self.battery_swap()
+            if waypoint != FlightPlan.origin:
+                self.battery_swap()
+            else:
+                # halt for battery swap at location
+                self.update_time(FlightPlan.time_to_swap_battery)
+                self.battery_swap_indexes.append(len(self.waypoints) - 1)
 
     def takeoff(self) -> None:
         """Increment time accumulated based on set time to takeoff"""
@@ -111,14 +121,14 @@ class FlightPlan:
 
     def append_at_next_head(self) -> None:
         """Signal to add a stop at origin before next waypoint added to waypoints list head"""
-        self.origin_head = WAYPOINT_LST.get_wp_by_name("Origin")
+        self.origin_head = FlightPlan.origin
 
     def battery_swap(self) -> None:
         """Add a stop at origin for a battery swap, updating distance from origin to head waypoint"""
-        origin = WAYPOINT_LST.get_wp_by_name("Origin")
-        dist_to_origin = calculate_distance(self.waypoints[0], origin)
-        self.add_route_head(0.0, dist_to_origin, origin)
+        dist_to_origin = calculate_distance(self.waypoints[0], FlightPlan.origin)
+        self.add_route_head(0.0, dist_to_origin, FlightPlan.origin)
         self.update_time(FlightPlan.time_to_swap_battery)
+        self.battery_swap_indexes.append(len(self.waypoints) - 1)
 
     def generate_email(self) -> dict:
         route_join = ";".join(map(str, self.route_plan))
@@ -128,8 +138,18 @@ class FlightPlan:
             "Body" : email_body
         }
 
+    def reformat_battery_indexes(self):
+        for i in range(len(self.battery_swap_indexes)):
+            self.battery_swap_indexes[i] = len(self.waypoints) - self.battery_swap_indexes[i] - 1
+        self.battery_swap_indexes.append(len(self.waypoints) - 1)
 
     # Static Methods
+    @staticmethod
+    def rtl_swap_battery(waypoint : Waypoint, acc_time : float) -> bool:
+        if waypoint == FlightPlan.origin and acc_time > 0.7 * FlightPlan.time_to_swap_battery:
+            return True
+        return False
+
     @staticmethod
     def is_low_battery(acc_time: float, est_distance: float, next_wp: Waypoint) -> bool:
         """Determine if there is enough battery to complete a route, then travel to origin
@@ -140,8 +160,8 @@ class FlightPlan:
         param next_wp: waypoint at the end of the route (Waypoint)
         :return: True if battery is low
         """
-        origin = WAYPOINT_LST.get_wp_by_name("Origin")
-        dist_to_origin = FlightPlan.calculate_distance(next_wp, origin)
+
+        dist_to_origin = FlightPlan.calculate_distance(next_wp, FlightPlan.origin)
 
         time_to_next_wp = est_distance / FlightPlan.drone_speed
         time_to_origin_from_next_wp = dist_to_origin / FlightPlan.drone_speed
@@ -160,8 +180,8 @@ class FlightPlan:
         param next_wp: the next waypoint to be travelled to (Waypoint)
         :return: the time required to travel
         """
-        origin = WAYPOINT_LST.get_wp_by_name("Origin")
-        return FlightPlan.calculate_distance(origin, next_wp) / FlightPlan.drone_speed
+        
+        return FlightPlan.calculate_distance(FlightPlan.origin, next_wp) / FlightPlan.drone_speed
     
     @staticmethod
     def calculate_distance(start_wp: Waypoint, end_wp: Waypoint) -> float:
