@@ -45,7 +45,13 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
             # Hold Command
             cmd = {
                 "Command" : "Hold",
-                "Details" : {"Time" : FlightPlan.time_to_load + FlightPlan.time_to_swap_battery}
+                "Details" : {"Time" : FlightPlan.time_to_load}
+            }
+            command_sequence.append(cmd)
+
+            # Battery Swap Command
+            cmd = {
+                "Command" : "BatterySwap"
             }
             command_sequence.append(cmd)
 
@@ -77,10 +83,9 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
             }
             command_sequence.append(cmd)
 
-            # Hold Command
+            # Battery Swap Command
             cmd = {
-                "Command" : "Hold",
-                "Details" : {"Time" : FlightPlan.time_to_swap_battery}
+                "Command" : "BatterySwap"
             }
             command_sequence.append(cmd)
 
@@ -91,7 +96,7 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
             }
             command_sequence.append(cmd)
 # --------------------------------------- END / START ---------------------------------------
-        else:
+        elif instruction == "END" or instruction == "START":
             # Navigate to Waypoint need to [land, load, takeoff]
             cmd = {
                 "Command" : "Navigate",
@@ -124,7 +129,23 @@ def format_for_execute_command(flightplan: FlightPlan) -> list:
             }
             command_sequence.append(cmd)
 
-    return command_sequence
+# --------------------------------------- START-I0 ---------------------------------------
+        elif instruction == "START-I0":
+            # Hold Command
+            cmd = {
+                "Command" : "Hold",
+                "Details" : {"Time" : FlightPlan.time_to_load}
+            }
+            command_sequence.append(cmd)
+
+            # Takeoff command
+            cmd = {
+                "Command" : "Takeoff",
+                "Details" : {"Altitude" : config["Ground"]["ALTITUDE"]}
+            }
+            command_sequence.append(cmd)
+
+    return command_sequence[:-2]
 
 def is_route(start_wp: Waypoint, end_wp: Waypoint, routes: list[Route]) -> tuple[bool, int]:
     for route in routes:
@@ -142,7 +163,11 @@ def add_route_instructions(waypoints: list[Waypoint], routes: list[Route], batte
     :return: list containing instructions for each waypoint, list specifying route completion 
     order (using route num)
     """
-    instructions = ["Takeoff"]
+    check_route, route_num = is_route(waypoints[0], waypoints[1], routes)
+    if check_route:
+        instructions = ["START-I0"]
+    else:
+        instructions = ["Takeoff"]
     route_plan = []
     i = 1
     
