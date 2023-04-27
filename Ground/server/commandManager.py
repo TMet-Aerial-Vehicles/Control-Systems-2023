@@ -149,7 +149,7 @@ class CommandManager:
                     flight_instructions = json.load(openfile)
 
                 # Send flight plan to Flight
-                # TODO: Update with latest communication
+                # TODO: Update with latest communication using str(flight_instructions)
                 # self.socket.send_message(f"QR3:{str(flight_instructions)}")
 
     def verify_routes(self, route_type: RouteTypes, routes) -> bool:
