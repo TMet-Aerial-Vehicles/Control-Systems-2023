@@ -9,7 +9,7 @@ class FlightPlan:
     time_to_land = 60.0  # seconds
     time_to_load = 10.0  # seconds
     max_time_on_battery = 1500.0  # seconds
-    max_time_in_air = 3000.0 # seconds
+    max_time_in_air = 3300.0 # seconds
     time_to_swap_battery = 250 # seconds
 
     # User configured RTL location
@@ -131,6 +131,10 @@ class FlightPlan:
         self.battery_swap_indexes.append(len(self.waypoints) - 1)
 
     def generate_email(self) -> dict:
+        """Generate an email with the planned route order
+
+        :return: Dictionary containing email subject and body (Dict)
+        """
         route_join = ";".join(map(str, self.route_plan))
         email_body = f"TMAV;{route_join}"
         return {

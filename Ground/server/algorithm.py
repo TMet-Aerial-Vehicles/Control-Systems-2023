@@ -4,6 +4,7 @@ from flightplan import FlightPlan
 from route_generator import generate_routes
 import configparser
 import os
+import json
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), '../..', 'config.ini'))
@@ -215,7 +216,7 @@ def get_next_waypoint_opts(current_waypoint: Waypoint, routes: list[Route]) -> t
     depicting if the completing a route or not [(Waypoint, int, bool)]. 2. min time to next waypoint (float)
     """    
     next_possible_waypoints = []
-    max_dist_to_nextwp = 10000
+    max_dist_to_nextwp = -1
     for i_route in range(len(routes)):
         if routes[i_route].start_waypoint == current_waypoint:
             next_possible_waypoints.append((routes[i_route].end_waypoint, i_route, True))
@@ -448,13 +449,13 @@ if __name__ == "__main__":
     r_6 = Route(6, 1, "Echo", "Hotel", 10, "", 243.0)
     r_7 = Route(7, 1, "Bravo", "Golf", 10, "", 43.0)
     # all_routes = [r_1,r_2,r_3,r_4,r_5,r_6,r_7]
-    all_routes = generate_routes(8)
+    all_routes = generate_routes(16)
     print("--------- ROUTES ----------")
     print(all_routes)
     flightplan = task_2(all_routes)
     print("------- FLIGHTPLAN --------")
     print(flightplan.waypoints)
-    print(flightplan.battery_swap_indexes)
+    # print(flightplan.battery_swap_indexes)
     print(flightplan.time_accumulated)
 
     # for i in range(len(flightplan.waypoints)):
@@ -462,5 +463,6 @@ if __name__ == "__main__":
 
     print(flightplan.generate_email()["Body"])
     commands = format_for_execute_command(flightplan)
-    for command in commands: print(command)
+    # for command in commands: print(command)
+    
 
