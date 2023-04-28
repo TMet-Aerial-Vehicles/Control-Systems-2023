@@ -1,6 +1,6 @@
 import geopandas as gpd
 from pyproj import CRS
-from route_diversion import route
+from route_diversion import DiversionRoute
 import matplotlib.pyplot as plt
 #the purpose of this function is to plot the generated route using geopandas
 def plot(evasion_route):
@@ -16,4 +16,3 @@ def plot(evasion_route):
     rout.plot(ax=ax, marker='o', color='red', markersize=5)
     ax.set_title('Route Points on World Map')
     plt.show()
-    
