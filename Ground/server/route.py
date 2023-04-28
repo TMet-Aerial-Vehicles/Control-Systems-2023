@@ -17,8 +17,8 @@ class Route:
 Route number 2: 6 pers; Delta; Charlie; 5 kg; nil; $50\
 Route number 3: 4 pers; Alpha; Zulu; 15 kg; other comment; $150"
 
-    def __init__(self, number, num_passengers, start_waypoint_name,
-                 end_waypoint_name, max_vehicle_weight, remarks, reward):
+    def __init__(self, number: int = 0, num_passengers: int = 0, start_waypoint_name: str = "Origin",
+                 end_waypoint_name: str = "Origin", max_vehicle_weight: float = 0, remarks: str = "", reward: float = 0.0):
         self.number = number
         self.num_passengers = num_passengers
         self.start_waypoint_name = start_waypoint_name
@@ -46,3 +46,9 @@ Route number 3: 4 pers; Alpha; Zulu; 15 kg; other comment; $150"
             "remarks": self.remarks,
             "reward": self.reward
         }
+    
+    def __str__(self):
+        return f"[{self.start_waypoint_name}, {self.end_waypoint_name}, {self.reward}]"
+
+    def __repr__(self) -> str:
+        return f"[{self.start_waypoint_name}, {self.end_waypoint_name}, {self.reward}]"

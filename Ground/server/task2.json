@@ -1,0 +1,542 @@
+[
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Xray",
+            "Latitude": 48.508981,
+            "Longitude": -71.639107,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Echo",
+            "Latitude": 48.5029013,
+            "Longitude": -71.6407195,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "November",
+            "Latitude": 48.507877,
+            "Longitude": -71.641643,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Xray",
+            "Latitude": 48.508981,
+            "Longitude": -71.639107,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Foxtrot",
+            "Latitude": 48.508072,
+            "Longitude": -71.634186,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Romeo",
+            "Latitude": 48.5125668,
+            "Longitude": -71.6372898,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Point 18",
+            "Latitude": 48.505351,
+            "Longitude": -71.635331,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "November",
+            "Latitude": 48.507877,
+            "Longitude": -71.641643,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Kilo",
+            "Latitude": 48.499458,
+            "Longitude": -71.633141,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Bravo",
+            "Latitude": 48.506095,
+            "Longitude": -71.631752,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Alpha",
+            "Latitude": 48.510012,
+            "Longitude": -71.646305,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "BatterySwap"
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Uniform",
+            "Latitude": 48.494317,
+            "Longitude": -71.632982,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Golf",
+            "Latitude": 48.5079538,
+            "Longitude": -71.6459941,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Tango",
+            "Latitude": 48.512783,
+            "Longitude": -71.651899,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Foxtrot",
+            "Latitude": 48.508072,
+            "Longitude": -71.634186,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "India",
+            "Latitude": 48.511464,
+            "Longitude": -71.643298,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Sierra",
+            "Latitude": 48.504569,
+            "Longitude": -71.646339,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Charlie",
+            "Latitude": 48.496972,
+            "Longitude": -71.635096,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Whiskey",
+            "Latitude": 48.506956,
+            "Longitude": -71.629868,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Alpha",
+            "Latitude": 48.510012,
+            "Longitude": -71.646305,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "BatterySwap"
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Charlie",
+            "Latitude": 48.496972,
+            "Longitude": -71.635096,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Xray",
+            "Latitude": 48.508981,
+            "Longitude": -71.639107,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    },
+    {
+        "Command": "Hold",
+        "Details": {
+            "Time": 10.0
+        }
+    },
+    {
+        "Command": "Takeoff",
+        "Details": {
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Navigate",
+        "Details": {
+            "Name": "Alpha",
+            "Latitude": 48.510012,
+            "Longitude": -71.646305,
+            "Altitude": "80"
+        }
+    },
+    {
+        "Command": "Land"
+    }
+]

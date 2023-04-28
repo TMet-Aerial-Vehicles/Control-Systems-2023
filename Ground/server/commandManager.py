@@ -1,4 +1,5 @@
 # Manager for sending and verifying route commands
+import json
 import logging
 import configparser
 import requests
@@ -7,6 +8,7 @@ from qr import QrTypes, QrHandler
 from telemetryHandler import TelemetryHandler
 from route import RouteTypes
 from waypoint import Waypoint
+from algorithm import task_2, format_for_execute_command
 
 from Shared.loggingHandler import setup_logging
 
@@ -129,22 +131,26 @@ class CommandManager:
 
             if TASK_2_EMAIL_DAY:
                 # Optimization algorithm
-                # flight_plan_route = calculate_flight_plan(routes)
+                flightplan = task_2(routes)
 
-                # Save to csv
+                # Save to json
+                flight_instructions = format_for_execute_command(flightplan)
+                json_obj = json.dumps(flight_instructions, indent=4)
+                with open("task2.json", "w") as outfile:
+                    outfile.write(json_obj)
 
                 # Send email with route plan
-                pass
+                comp_email = flightplan.generate_email()
+                # TODO: Send email https://stackoverflow.com/questions/6270782/how-to-send-an-email-with-python 
+
             else:
                 # Read flight plan from file
+                with open('task2.json', "r") as openfile:
+                    flight_instructions = json.load(openfile)
 
                 # Send flight plan to Flight
-                # TODO: Update into Flight readable format
-                routes_str = ";".join([f"{route.name}, "
-                                       f"{route.starting_waypoint}, "
-                                       f"{route.end_waypoint}"
-                                       for route in flight_plan_route])
-                # self.socket.send_message(f"QR3:{routes_str}")
+                # TODO: Update with latest communication using str(flight_instructions)
+                # self.socket.send_message(f"QR3:{str(flight_instructions)}")
 
     def verify_routes(self, route_type: RouteTypes, routes) -> bool:
         """Validate routes with saved routes
