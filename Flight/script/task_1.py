@@ -7,6 +7,8 @@ import os
 from Shared.loggingHandler import setup_logging
 from Flight.script.pixhawkController import PixhawkController
 from Flight.script.commandHandler import CommandHandler
+from Flight.script.lightController import LightController
+from Flight.script.soundController import SoundController
 
 
 config = configparser.ConfigParser()
@@ -19,15 +21,16 @@ FLIGHT_API = f"http://{config['Flight_API']['API_IP_Address']}" + \
 # Initialize all classes needed:
 logging.info("Initializing Pixhawk Connection")
 pixhawk = PixhawkController()
-logging.info("Initializing CommandHandler")
-commandHandler = CommandHandler(pixhawk)
-logging.info("Initializing Light Controller")
-# - LightController
+lightController = LightController()
+soundController = SoundController()
+commandHandler = CommandHandler(pixhawk, lightController, soundController)
+print("Initialized Controllers")
 
 logging.info("Connecting to Pixhawk")
 pixhawk.connect(config['Flight_Script']['Pixhawk_Device'])
 logging.info("Connecting to Flight API")
 pixhawk.connect_to_flight_api(blocking=True)
+print("Connected to Pixhawk and Flight API")
 
 
 # Get initial route when ready
@@ -62,11 +65,12 @@ while not initiate_route:
         logging.info("Waiting for Initiate")
         time.sleep(1)
 
-# TODO: Add Sound
-time.sleep(10)
+# Initiating
 print("Launching in 10 seconds")
+soundController.countdown(9)
+soundController.play_quick_sound(4)
 logging.info("Launching")
-
+print("Launching")
 
 # Route Execution Loop
 route_index = 0

@@ -1,13 +1,20 @@
 import time
 
 from Flight.script.pixhawkController import PixhawkController
+from Flight.script.lightController import LightController
+from Flight.script.soundController import SoundController
+
 import math
 
 
 class CommandHandler:
 
-    def __init__(self, pixhawkController: PixhawkController):
+    def __init__(self, pixhawkController: PixhawkController,
+                 lightController: LightController,
+                 soundController: SoundController):
         self.pixhawk = pixhawkController
+        self.light = lightController
+        self.sound = soundController
         self.current_command = {}
 
     def execute_command(self, command):
