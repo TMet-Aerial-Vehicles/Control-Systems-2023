@@ -1,8 +1,7 @@
-from boundingbox import BoundingBox
 from shapely import LineString, Point
 from waypoint import WAYPOINT_LST
 import math
-import numpy
+
 
 #instead of trying to actually make the bounding box, the drone will calculate the shortest route to the rejoin point using the bounding box points as way points.
 
@@ -42,7 +41,7 @@ class DiversionRoute:
             self.evasionRoute.append(Point(self.currentPosition))
             self.evasionRoute.append(Point(self.boundingbox.rejoin))
             #uncomment line below to see the evasion route as it's made
-            #self.boundingbox.visualize(self.evasionRoute)
+            self.boundingbox.visualize(self.evasionRoute)
             self.backtoLongLat()
 
 
