@@ -18,6 +18,9 @@ class CommandHandler:
         self.current_command = {}
 
     def execute_command(self, command):
+        # Commands Accepted:
+        #   Takeoff, Navigate, Altitude, Land, RTL, BatteryChange, NavMode,
+        #   Brake, Hold
         self.current_command = command
         if command["Command"] == "Takeoff":
             print("Setting Guided")
@@ -32,9 +35,19 @@ class CommandHandler:
             self.pixhawk.go_to_location(command["Details"]["Latitude"],
                                         command["Details"]["Longitude"],
                                         command["Details"]["Altitude"])
+        elif command["Command"] == "NavMode":
+            self.pixhawk.set_mode("GUIDED")
+            time.sleep(1)
+        elif command["Command"] == "Brake":
+            self.pixhawk.set_mode("BRAKE")
+            time.sleep(1)
         elif self.current_command["Command"] == "Altitude":
             self.pixhawk.set_altitude(
                 self.current_command["Details"]["Altitude"])
+        elif self.current_command["Command"] == "BatteryChange":
+            self.sound.play_quick_sound(5)
+        elif self.current_command["Command"] == "Hold":
+            self.sound.countdown(command["Details"]["Time"])
         elif command["Command"] == "Land":
             # TODO: Use CV for Landing
             self.pixhawk.set_mode("Land")
@@ -43,6 +56,7 @@ class CommandHandler:
 
     def is_current_command_completed(self):
         telemetry = self.pixhawk.get_telemetry(blocking=True)
+
         if self.current_command["Command"] == "Takeoff":
             target_alt = self.current_command["Details"]["Altitude"]
             if target_alt - 0.5 < telemetry['altitude'] < target_alt + 0.5:
@@ -54,6 +68,9 @@ class CommandHandler:
             dist = math.sqrt((d_lat * d_lat) + (d_lon * d_lon)) * 1.113195e5
             if dist < 1:
                 return True
+        elif self.current_command["Command"] in ["NavMode", "Brake", "Hold"]:
+            time.sleep(2)
+            return True
         elif self.current_command["Command"] == "Land":
             # TODO: Use CV for Landing
             if -0.5 < telemetry['altitude'] < 0.5:
@@ -67,4 +84,3 @@ class CommandHandler:
                 return True
 
         return False
-

@@ -47,6 +47,7 @@ class GroundController:
             if qr_response["success"]:
                 # Send route to flight
                 self.command_manager.process_qr(QrTypes(qr_type))
+            print("QR Processing Completed")
             return qr_response
 
         logging.warning("process_qr(): Missing body parameters")

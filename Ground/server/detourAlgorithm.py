@@ -10,7 +10,21 @@ BUFFER_DISTANCE = 25
 
 
 def get_detour_route(start: Waypoint, rejoin: Waypoint,
-                      bounding_box: List[Waypoint], create_plot=False):
+                     bounding_box: List[Waypoint],
+                     create_plot=False) -> List[Waypoint]:
+    """
+    Returns a list of intermediate waypoints to visit to reach rejoin waypoint
+    and circumvent the bounding box
+
+    Args:
+        start: starting waypoint
+        rejoin: ending waypoint
+        bounding_box: list of waypoints to avoio
+        create_plot: whether to plot a graph of the bounding box and detour
+
+    Returns: list of intermediate waypoints
+
+    """
     # Project all coordinates to x,y plan
     ll_to_m_proj = pyproj.Proj(proj='utm', zone=10, ellps='WGS84')
     xy_start = Point(ll_to_m_proj(start.longitude, start.latitude))
@@ -63,7 +77,7 @@ def get_detour_route(start: Waypoint, rejoin: Waypoint,
                                     source=(xy_start.x, xy_start.y),
                                     target=(xy_rejoin.x, xy_rejoin.y),
                                     weight='weight')
-            print("Detour Path Found:", detour_xy_path)
+            print("Detour Path Found")
 
             if create_plot:
                 x_coords = [coord[0] for coord in detour_xy_path]
@@ -77,7 +91,11 @@ def get_detour_route(start: Waypoint, rejoin: Waypoint,
             print("NO DETOUR FOUND")
     else:
         # Return the Rejoin point if no intersection with bounding box
-        return [{"Latitude": rejoin.latitude, "Longitude": rejoin.longitude}]
+        print("No Detour Needed")
+        if create_plot:
+            plt.savefig("detourRoute.jpg")
+            plt.show()
+        return [rejoin]
 
     if create_plot:
         plt.savefig("detourRoute.jpg")
@@ -89,13 +107,16 @@ def get_detour_route(start: Waypoint, rejoin: Waypoint,
     xy_to_ll_transformer = pyproj.Transformer.from_crs(xy_zone, ll_proj)
 
     detour_route = []
-
+    inter_wp_num = 1
     for coordinate in detour_xy_path:
         detour_lat, detour_lon = xy_to_ll_transformer.transform(coordinate[0],
                                                                 coordinate[1])
-        detour_route.append({"Latitude": detour_lat, "Longitude": detour_lon})
+        detour_route.append(
+            Waypoint(name=f"InterNode {inter_wp_num}",
+                     number=(50 + inter_wp_num),
+                     longitude=detour_lon,
+                     latitude=detour_lat))
+        inter_wp_num += 1
 
-    detour_route.append({"Latitude": rejoin.latitude,
-                         "Longitude": rejoin.longitude})
-
+    print("Detour Intermediate Waypoints: ", detour_route)
     return detour_route

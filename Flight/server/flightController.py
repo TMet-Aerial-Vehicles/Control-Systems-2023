@@ -46,7 +46,7 @@ class FlightController:
 
     def set_initial_route(self, json_response: dict):
         # Parse route from json
-        route_plan_json = json_response['route']
+        route_plan_json = json_response["Route"]
         if route_plan_json and len(route_plan_json) != 0:
             self.route = route_plan_json
         return {
@@ -97,5 +97,5 @@ class FlightController:
     def check_for_priority_command(self):
         return {
             "success": True,
-            "route_updated": False
+            "priority_command_created": False
         }

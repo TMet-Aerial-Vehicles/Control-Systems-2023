@@ -9,6 +9,7 @@ from telemetryHandler import TelemetryHandler
 from route import RouteTypes
 from waypoint import Waypoint
 from algorithm import task_2, format_for_execute_command
+from detourAlgorithm import get_detour_route
 
 from Shared.loggingHandler import setup_logging
 
@@ -22,7 +23,9 @@ FLIGHT_API = f"http://{config['Flight_API']['API_IP_Address']}" + \
 TASK_2_EMAIL_DAY = True
 
 # Weight of drone used to filter Task 2 routes with weight limits
-VEHICLE_WEIGHT = 0
+VEHICLE_WEIGHT = 7
+
+FLIGHT_ALTITUDE = 80
 
 
 class CommandManager:
@@ -32,8 +35,12 @@ class CommandManager:
                  telemetry_handler: TelemetryHandler):
         self.qr_handler = qr_handler
         self.telemetry_handler = telemetry_handler
-        self.route = []
-        self.updated_route = []
+
+        # For route tracking
+        self.waypoint_routes = []
+        self.initial_route_plan = []
+        self.updated_route_plan = []
+
         self.current_command = None
         self.backup_command = None
         self.sent_command = None
@@ -80,31 +87,27 @@ class CommandManager:
         :return:
         """
         qr_response = self.qr_handler.get_qr(str(qr_type.value),
-                                             waypoints_as_dicts=True)
+                                             waypoints_as_dicts=False)
         if not qr_response['success']:
             return
         qr_data = qr_response['qr_data']
 
         if qr_type == QrTypes.Task_1_Initial_Qr:
+            # Save waypoints to be used by Task_1_Update_Qr
+            self.waypoint_routes = qr_data["waypoints"]
+
             # Create route plan
             plan = [
                 {"Command": "Takeoff", "Details": {"Altitude": 80}}
             ]
             for waypoint in qr_data["waypoints"]:
-                plan.append(
-                    {
-                        "Command": "Navigate",
-                        "Details": {
-                            "Latitude": waypoint["latitude"],
-                            "Longitude": waypoint["longitude"],
-                            "Altitude": 80,
-                            "Name": waypoint["name"]
-                        }
-                    })
-            plan.append({"Command": "RTL"})
+                plan.append(nav_command(waypoint.name, waypoint.latitude,
+                                        waypoint.longitude, FLIGHT_ALTITUDE))
 
-            json_route = {"route": plan}
-            self.route = plan
+            plan.append({"Command": "Land"})
+
+            json_route = {"Route": plan}
+            self.initial_route_plan = plan
             print(json_route)
 
             try:
@@ -115,18 +118,57 @@ class CommandManager:
                 logging.info(f"Parse Route - Initial Route POST Error:\n\t{e}")
 
         elif qr_type == QrTypes.Task_1_Update_Qr:
-            # Maybe BoundaryHandler class should calculate detour?
-            route_update = self.calculate_detour(qr_data.boundaries,
-                                                 qr_data.rejoin_waypoint)
-            wp_upd_str = f"{route_update}"
-            message = f"QR2:{wp_upd_str}"
-            # self.socket.send_message(message)
+            # Get detour route to rejoin waypoint
+            route_update = self.calculate_detour(qr_data["boundaries"],
+                                                 qr_data["rejoin_waypoint"])
+
+            # Get rest of route to complete after rejoin
+            remaining_waypoints = []
+            rejoin_wp_name = qr_data["rejoin_waypoint"].name
+            for wp_i in range(len(self.waypoint_routes)):
+                if self.waypoint_routes[wp_i].name == rejoin_wp_name:
+                    remaining_waypoints = self.waypoint_routes[wp_i:]
+
+            # Create flight update message with updated flight plan
+            flight_update_msg = {
+                "Priority Command": {
+                    "Command": "Brake",
+                    "Details": {}
+                },
+                "Updated Flight Plan": []
+            }
+            flight_update_msg["Updated Flight Plan"].append(
+                {"Command": "NavMode"})
+
+            # Add intermediate waypoints
+            for waypoint in route_update:
+                flight_update_msg["Updated Flight Plan"].append(
+                    nav_command(waypoint.name, waypoint.latitude,
+                                waypoint.longitude, FLIGHT_ALTITUDE)
+                )
+            # Add rejoin and remaining waypoints
+            for waypoint in remaining_waypoints:
+                flight_update_msg["Updated Flight Plan"].append(
+                    nav_command(waypoint.name, waypoint.latitude,
+                                waypoint.longitude, FLIGHT_ALTITUDE)
+                )
+
+            # Add final landing
+            flight_update_msg["Updated Flight Plan"].append({"Command": "Land"})
+
+            self.updated_route_plan = flight_update_msg
+
+            try:
+                response = requests.post(f"{FLIGHT_API}/set-detour-route",
+                                         json=flight_update_msg)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as e:
+                logging.info(f"Parse Route - Detour Route POST Error:\n\t{e}")
 
         elif qr_type == QrTypes.Task_2_Qr:
-            flight_plan_route = qr_data.routes
 
             # Filter inaccessible routes
-            routes = [route for route in qr_data.routes
+            routes = [route for route in qr_data["routes"]
                       if route.max_vehicle_weight > VEHICLE_WEIGHT]
 
             if TASK_2_EMAIL_DAY:
@@ -141,7 +183,7 @@ class CommandManager:
 
                 # Send email with route plan
                 comp_email = flightplan.generate_email()
-                # TODO: Send email https://stackoverflow.com/questions/6270782/how-to-send-an-email-with-python 
+                # TODO: Send email https://stackoverflow.com/questions/6270782/how-to-send-an-email-with-python
 
             else:
                 # Read flight plan from file
@@ -175,14 +217,30 @@ class CommandManager:
 
     def calculate_detour(self, boundaries: list[Waypoint],
                          rejoin_waypoint: Waypoint):
-        """Calculate detour from current position to rejoin waypoint
+        """Calculate intermediate waypoints to detour from current position
+         to rejoin waypoint
 
         :param boundaries: boundary of enclosed by waypoints to avoid
         :param rejoin_waypoint: waypoint to end at
-        :return:
+        :return: list of intermediate waypoints
         """
-        # TODO: Finish detour
         logging.info(f"Calculating detour to {rejoin_waypoint.name}")
-        detour_start = self.telemetry_handler.get_recent_data()
-        detour_end = rejoin_waypoint
-        return boundaries, detour_start, detour_end
+        current_position = self.telemetry_handler.get_recent_data()
+        detour_start = Waypoint(name="CurrentPosition", number=1234,
+                                longitude=current_position["longitude"],
+                                latitude=current_position["latitude"])
+        detour_plan = get_detour_route(detour_start, rejoin_waypoint,
+                                       boundaries, True)
+        return detour_plan
+
+
+def nav_command(name, latitude, longitude, altitude):
+    return {
+        "Command": "Navigate",
+        "Details": {
+            "Latitude": latitude,
+            "Longitude": longitude,
+            "Altitude": altitude,
+            "Name": name
+        }
+    }
