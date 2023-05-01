@@ -40,8 +40,8 @@ def get_detour_route(start: Waypoint, rejoin: Waypoint,
 
     if create_plot:
         plt.plot(*original_bbox.exterior.xy, "xr-")
-        plt.plot(*xy_start.xy, "xr-")
-        plt.plot(*xy_rejoin.xy, "xr-")
+        plt.plot(*xy_start.xy, "og-")
+        plt.plot(*xy_rejoin.xy, ">m-")
 
         plt.plot(*bb_poly.exterior.xy, "purple")  # Convex hull of original bbox
         plt.plot(*bb_poly_buff_no_tol.exterior.xy, "black")
