@@ -6,7 +6,7 @@ import sys
 sys.path.append('../../')
 
 from Shared.loggingHandler import setup_logging
-from groundController import GroundController
+from Ground.server.groundController import GroundController
 
 
 config = configparser.ConfigParser()
@@ -67,20 +67,6 @@ def set_telemetry():
     json_response = request.get_json()
     # Process data, and notify event subscribers
     return groundController.process_telemetry(json_response)
-
-
-@app.route('/verify-route', methods=['POST'])
-def verify_route():
-    # Verify route received with route command sent
-    json_response = request.get_json()
-    return groundController.verify_route(json_response)
-
-
-@app.route('/verify-command', methods=['POST'])
-def verify_command():
-    # Verify command received with command sent
-    json_response = request.get_json()
-    return groundController.verify_command(json_response)
 
 
 @app.route('/manual-command', methods=['POST'])

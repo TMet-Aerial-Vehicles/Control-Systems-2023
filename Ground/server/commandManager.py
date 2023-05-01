@@ -41,45 +41,7 @@ class CommandManager:
         self.initial_route_plan = []
         self.updated_route_plan = []
 
-        self.current_command = None
-        self.backup_command = None
-        self.sent_command = None
-        self.sent_message = ""
-
-    def connect_to_socket(self):
-        """Start socket connection
-
-        :return: True if successful connection, else False
-        """
-        # return self.socket.connect()
-        return True
-
-    def send_command(self, message):
-        """Send message to Flight
-
-        :param message: (str) message to send
-        :return: True if successful send, else False
-        """
-        # status = self.socket.send_message(message)
-        status = True
-        self.sent_message = message if status else self.sent_message
-        return status
-
-    def send_last_message(self):
-        """Send last recorded message
-
-        :return: True if successful send, else False
-        """
-        # return self.socket.send_message(self.sent_message)
-        return True
-
-    def send_initial_route(self):
-        pass
-
-    def send_updated_route(self):
-        pass
-
-    def process_qr(self, qr_type: QrTypes) -> None:
+    def execute_qr(self, qr_type: QrTypes) -> None:
         """Process QR data and sending initial/updated route to Flight
         Assumes QR data is validated
 
@@ -95,76 +57,9 @@ class CommandManager:
         if qr_type == QrTypes.Task_1_Initial_Qr:
             # Save waypoints to be used by Task_1_Update_Qr
             self.waypoint_routes = qr_data["waypoints"]
-
-            # Create route plan
-            plan = [
-                {"Command": "Takeoff", "Details": {"Altitude": 80}}
-            ]
-            for waypoint in qr_data["waypoints"]:
-                plan.append(nav_command(waypoint.name, waypoint.latitude,
-                                        waypoint.longitude, FLIGHT_ALTITUDE))
-
-            plan.append({"Command": "Land"})
-
-            json_route = {"Route": plan}
-            self.initial_route_plan = plan
-            print(json_route)
-
-            try:
-                response = requests.post(f"{FLIGHT_API}/set-initial-route",
-                                         json=json_route)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                logging.info(f"Parse Route - Initial Route POST Error:\n\t{e}")
-
+            self.handle_initial_route_qr(qr_data)
         elif qr_type == QrTypes.Task_1_Update_Qr:
-            # Get detour route to rejoin waypoint
-            route_update = self.calculate_detour(qr_data["boundaries"],
-                                                 qr_data["rejoin_waypoint"])
-
-            # Get rest of route to complete after rejoin
-            remaining_waypoints = []
-            rejoin_wp_name = qr_data["rejoin_waypoint"].name
-            for wp_i in range(len(self.waypoint_routes)):
-                if self.waypoint_routes[wp_i].name == rejoin_wp_name:
-                    remaining_waypoints = self.waypoint_routes[wp_i:]
-
-            # Create flight update message with updated flight plan
-            flight_update_msg = {
-                "Priority Command": {
-                    "Command": "Brake",
-                    "Details": {}
-                },
-                "Updated Flight Plan": []
-            }
-            flight_update_msg["Updated Flight Plan"].append(
-                {"Command": "NavMode"})
-
-            # Add intermediate waypoints
-            for waypoint in route_update:
-                flight_update_msg["Updated Flight Plan"].append(
-                    nav_command(waypoint.name, waypoint.latitude,
-                                waypoint.longitude, FLIGHT_ALTITUDE)
-                )
-            # Add rejoin and remaining waypoints
-            for waypoint in remaining_waypoints:
-                flight_update_msg["Updated Flight Plan"].append(
-                    nav_command(waypoint.name, waypoint.latitude,
-                                waypoint.longitude, FLIGHT_ALTITUDE)
-                )
-
-            # Add final landing
-            flight_update_msg["Updated Flight Plan"].append({"Command": "Land"})
-
-            self.updated_route_plan = flight_update_msg
-
-            try:
-                response = requests.post(f"{FLIGHT_API}/set-detour-route",
-                                         json=flight_update_msg)
-                response.raise_for_status()
-            except requests.exceptions.RequestException as e:
-                logging.info(f"Parse Route - Detour Route POST Error:\n\t{e}")
-
+            self.handle_updated_route_qr(qr_data)
         elif qr_type == QrTypes.Task_2_Qr:
 
             # Filter inaccessible routes
@@ -194,6 +89,90 @@ class CommandManager:
                 # TODO: Update with latest communication using str(flight_instructions)
                 # self.socket.send_message(f"QR3:{str(flight_instructions)}")
 
+    def handle_initial_route_qr(self, qr_data: dict):
+        """
+        Handles Task 1 Initial QR. Creates route plan and sends plan to Flight
+        Args:
+            qr_data: Dict of waypoints in initial route
+        Returns: None
+        """
+        # Create route plan
+        plan = [
+            {"Command": "Takeoff", "Details": {"Altitude": 80}}
+        ]
+        for waypoint in qr_data["waypoints"]:
+            plan.append(nav_command(waypoint.name, waypoint.latitude,
+                                    waypoint.longitude, FLIGHT_ALTITUDE))
+
+        plan.append({"Command": "Land"})
+
+        json_route = {"Route": plan}
+        self.initial_route_plan = plan
+        print(json_route)
+
+        try:
+            response = requests.post(f"{FLIGHT_API}/set-initial-route",
+                                     json=json_route)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logging.info(f"Parse Route - Initial Route POST Error:\n\t{e}")
+
+    def handle_updated_route_qr(self, qr_data: dict):
+        """
+        Handles Task 1 Update QR. Finds detour around bounding box to the rejoin
+        waypoint, and finishes initial route. Sends updated plan to Flight
+        Args:
+            qr_data: Dict containing boundary and rejoin waypoints
+        Returns: None
+        """
+        # Get detour route to rejoin waypoint
+        route_update = self.calculate_detour(qr_data["boundaries"],
+                                             qr_data["rejoin_waypoint"])
+
+        # Get rest of route to complete after rejoin
+        remaining_waypoints = []
+        rejoin_wp_name = qr_data["rejoin_waypoint"].name
+        for wp_i in range(len(self.waypoint_routes)):
+            if self.waypoint_routes[wp_i].name == rejoin_wp_name:
+                remaining_waypoints = self.waypoint_routes[wp_i:]
+
+        # Create flight update message with updated flight plan
+        flight_update_msg = {
+            "Priority Command": {
+                "Command": "Brake",
+                "Details": {}
+            },
+            "Updated Flight Plan": []
+        }
+        flight_update_msg["Updated Flight Plan"].append(
+            {"Command": "NavMode"})
+
+        # Add intermediate waypoints
+        for waypoint in route_update:
+            flight_update_msg["Updated Flight Plan"].append(
+                nav_command(waypoint.name, waypoint.latitude,
+                            waypoint.longitude, FLIGHT_ALTITUDE)
+            )
+        # Add rejoin and remaining waypoints
+        for waypoint in remaining_waypoints:
+            flight_update_msg["Updated Flight Plan"].append(
+                nav_command(waypoint.name, waypoint.latitude,
+                            waypoint.longitude, FLIGHT_ALTITUDE)
+            )
+
+        # Add final landing
+        flight_update_msg["Updated Flight Plan"].append({"Command": "Land"})
+
+        self.updated_route_plan = flight_update_msg
+        print(flight_update_msg)
+
+        try:
+            response = requests.post(f"{FLIGHT_API}/set-detour-route",
+                                     json=flight_update_msg)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            logging.info(f"Parse Route - Detour Route POST Error:\n\t{e}")
+
     def verify_routes(self, route_type: RouteTypes, routes) -> bool:
         """Validate routes with saved routes
 
@@ -202,18 +181,11 @@ class CommandManager:
         :return: True if same routes, else False
         """
         if route_type == RouteTypes.Task_1_Initial_Route:
-            return self.route == routes
+            return self.initial_route_plan == routes
         elif route_type == RouteTypes.Task_1_Update_Route:
-            pass
+            return self.updated_route_plan == routes
         elif route_type == RouteTypes.Task_2_Route:
             pass
-
-    def get_sent_command(self) -> str:
-        """Retrieve last sent command message
-
-        :return: (str) command message
-        """
-        return self.sent_command
 
     def calculate_detour(self, boundaries: list[Waypoint],
                          rejoin_waypoint: Waypoint):

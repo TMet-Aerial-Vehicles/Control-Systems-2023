@@ -4,6 +4,7 @@
 
 from Shared.shared_utils import success_dict
 
+
 class BoundaryHandler:
 
     def __init__(self, qr_handler, telemetry_handler):

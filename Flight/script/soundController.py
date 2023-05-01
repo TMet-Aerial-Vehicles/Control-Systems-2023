@@ -5,6 +5,7 @@ from time import sleep
 
 DIRECTORY = os.getcwd()
 
+
 class SoundController:
 
     def __init__(self):

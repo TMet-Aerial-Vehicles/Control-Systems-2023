@@ -58,7 +58,7 @@ while not initiate_route:
     try:
         response = requests.get(f"{FLIGHT_API}/check-for-launch")
         response.raise_for_status()
-        if response.json() and response.json()["initiate_launch"] == True:
+        if response.json() and response.json()["initiate_launch"]:
             initiate_route = True
 
     except requests.exceptions.RequestException as e:

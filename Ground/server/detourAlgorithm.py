@@ -15,15 +15,12 @@ def get_detour_route(start: Waypoint, rejoin: Waypoint,
     """
     Returns a list of intermediate waypoints to visit to reach rejoin waypoint
     and circumvent the bounding box
-
     Args:
         start: starting waypoint
         rejoin: ending waypoint
-        bounding_box: list of waypoints to avoio
+        bounding_box: list of waypoints to avoid
         create_plot: whether to plot a graph of the bounding box and detour
-
     Returns: list of intermediate waypoints
-
     """
     # Project all coordinates to x,y plan
     ll_to_m_proj = pyproj.Proj(proj='utm', zone=10, ellps='WGS84')
@@ -74,9 +71,9 @@ def get_detour_route(start: Waypoint, rejoin: Waypoint,
         detour_xy_path = []
         try:
             detour_xy_path = nx.shortest_path(graph,
-                                    source=(xy_start.x, xy_start.y),
-                                    target=(xy_rejoin.x, xy_rejoin.y),
-                                    weight='weight')
+                                              source=(xy_start.x, xy_start.y),
+                                              target=(xy_rejoin.x, xy_rejoin.y),
+                                              weight='weight')
             print("Detour Path Found")
 
             if create_plot:
@@ -86,9 +83,10 @@ def get_detour_route(start: Waypoint, rejoin: Waypoint,
 
             # Filter out starting and rejoin coordinate
             detour_xy_path = detour_xy_path[1:-1]
-        except:
+        except Exception as e:
             # If no valid path is found, return None
             print("NO DETOUR FOUND")
+            print(e)
     else:
         # Return the Rejoin point if no intersection with bounding box
         print("No Detour Needed")

@@ -9,12 +9,12 @@ import math
 
 class CommandHandler:
 
-    def __init__(self, pixhawkController: PixhawkController,
-                 lightController: LightController,
-                 soundController: SoundController):
-        self.pixhawk = pixhawkController
-        self.light = lightController
-        self.sound = soundController
+    def __init__(self, pixhawk_controller: PixhawkController,
+                 light_controller: LightController,
+                 sound_controller: SoundController):
+        self.pixhawk = pixhawk_controller
+        self.light = light_controller
+        self.sound = sound_controller
         self.current_command = {}
 
     def execute_command(self, command):

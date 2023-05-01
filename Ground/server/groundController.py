@@ -7,7 +7,6 @@ import configparser
 from flask_socketio import SocketIO
 
 from qr import QrHandler, QrTypes
-from route import RouteTypes
 from telemetryHandler import TelemetryHandler
 from boundaryHandler import BoundaryHandler
 from commandManager import CommandManager
@@ -46,7 +45,7 @@ class GroundController:
 
             if qr_response["success"]:
                 # Send route to flight
-                self.command_manager.process_qr(QrTypes(qr_type))
+                self.command_manager.execute_qr(QrTypes(qr_type))
             print("QR Processing Completed")
             return qr_response
 
@@ -83,41 +82,3 @@ class GroundController:
         :return: Telemetry data
         """
         return self.telemetry_handler.get_recent_data()
-
-    def verify_route(self, json_response: dict) -> dict:
-        """Verifies route received from Flight from Server 1
-        If mismatch, resends route to flight
-
-        :param json_response: Route from flight
-        :return: API response
-        """
-        routes = json_response["routes"] if "routes" in json_response else None
-        route_type = (json_response["route_type"]
-                      if "route_type" in json_response else None)
-
-        if not route_type and routes:
-            return error_dict("Missing route parameters")
-
-        try:
-            route_type = RouteTypes(int(route_type))
-        except ValueError:
-            error_msg = "Verify_Route: Unable to identify Route Type Format"
-            logging.error(error_msg)
-            self.command_manager.send_last_message()
-            return error_dict(error_msg)
-
-        if self.command_manager.verify_routes(route_type, routes):
-            success_log = "Confirmation routes from Flight verified"
-            logging.info(success_log)
-            return success_dict(success_log)
-        else:
-            mismatched_log = f"Mismatched Route from Flight: \n" \
-                f"\t Received: {json_response['routes']}\n" \
-                f"\t Sent: {self.command_manager.get_sent_command()}\n"
-            logging.error(mismatched_log)
-
-            # Send routes to Flight again
-            self.command_manager.send_last_message()
-
-    def verify_command(self, json_response: dict):
-        pass

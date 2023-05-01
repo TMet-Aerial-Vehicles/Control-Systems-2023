@@ -19,7 +19,7 @@ class FlightController:
     def __init__(self):
         # Need to Track
         # - Entire route plan
-        # - Current Command (en route, landing, takeoff
+        # - Current Command (en route, landing, takeoff)
         # - Pixhawk Drone Mode
         # - Priority Command for immediate intent, pauses route plan to do it
         # - Bool for when main route has been recently updated
@@ -53,20 +53,6 @@ class FlightController:
             "success": True,
             "route": route_plan_json
         }
-        # Verify flight plan with ground
-
-        # try:
-        #     response = requests.post(f"{GROUND_API}/verify-route",
-        #                              json=route_plan)
-        #     response.raise_for_status()
-        #     if response.json():
-        #         self.route_confirmed = True
-        #     # Await response, if successful, route confirmed,
-        #     # get ready to takeoff
-        #     return success_dict("Route Parsed")
-        # except requests.exceptions.RequestException as e:
-        #     logging.info(f"Parse Route - Verify Route Connection Error:\n\t{e}")
-        #     return error_dict(f"Error parsing route: {e}")
 
     def get_initial_route(self):
         return {

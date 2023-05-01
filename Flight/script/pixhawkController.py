@@ -95,7 +95,8 @@ class PixhawkController:
                 time.sleep(3)
 
     def get_command_ack(self):
-        cmd_resp = self.vehicle.recv_match(type='COMMAND_ACK', blocking=True, timeout=10)
+        cmd_resp = self.vehicle.recv_match(type='COMMAND_ACK',
+                                           blocking=True, timeout=10)
         logging.info(f"\t{cmd_resp}")
         return cmd_resp
 
@@ -138,7 +139,6 @@ class PixhawkController:
         return self.get_command_ack()
 
     def set_mode(self, mode):
-        # self.vehicle.set_mode(mode)
         if mode not in self.vehicle.mode_mapping():
             print(f"Unknown mode: {mode}")
             logging.info(f"Unknown mode: {mode}")
@@ -151,16 +151,6 @@ class PixhawkController:
             mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,
             mode_id)
         return self.get_command_ack()
-
-    def set_attitude(self, roll_angle=0.0, pitch_angle=0.0,
-                     yaw_rate=0.0, thrust=0.5):
-        # Untested and unknown usage
-        print(f"Setting attitude to roll={roll_angle}, pitch={pitch_angle},"
-              " yaw={yaw_rate}, thrust={thrust}")
-        self.vehicle.attitude_euler_send(
-            roll_angle, pitch_angle, 0, 0, 0, yaw_rate)
-        self.vehicle.manual_control_send(
-            0, 0, int(thrust * 1000), 0, 0)
 
     def go_to_location(self, latitude, longitude, altitude):
         print(f"Going to location: ",
@@ -176,8 +166,6 @@ class PixhawkController:
                 int(longitude * 10**7),
                 altitude,
                 0, 0, 0, 0, 0, 0, 0, 0))
-        # time.sleep(1)
-        # return self.go_to_location_relative(latitude, longitude, altitude)
 
     def go_to_location_relative(self, latitude, longitude, altitude):
         current_position = self.vehicle.recv_match(type='GLOBAL_POSITION_INT',
@@ -212,35 +200,9 @@ class PixhawkController:
             0, altitude)
         time.sleep(1)
 
-    def is_command_complete(self):
-        time.sleep(30)
-        print(self.current_command)
-        return True
-
-    def check_command_complete(self):
-        # return self.vehicle.messages['NAV_WAYPOINT'].command_reached
-        ack_msg = self.vehicle.recv_match(type="COMMAND_ACK", blocking=False)
-        # and ack_msg.command == self.last_cmd.command
-        if ack_msg is not None and ack_msg.result == 0:
-            # self.last_cmd = None
-            return True
-        return False
-
     def get_telemetry(self, blocking=False):
-        # self.vehicle.flush()
-        # msg = self.vehicle.recv_match(blocking=False)
-        # print(msg)
-        # if msg is not None:
-        #     lat = msg.get_type() == "GLOBAL_POSITION_INT" and msg.lat / 1e7
-        #     lon = msg.get_type() == "GLOBAL_POSITION_INT" and msg.lon / 1e7
-        #     alt = msg.get_type() == "GLOBAL_POSITION_INT" and msg.alt / 1e3
-        #     roll = msg.get_type() == "ATTITUDE" and math.degrees(msg.roll)
-        #     pitch = msg.get_type() == "ATTITUDE" and math.degrees(msg.pitch)
-        #     yaw = msg.get_type() == "ATTITUDE" and math.degrees(msg.yaw)
-        #     return {"latitude": lat, "longitude": lon, "altitude": alt, "roll": roll, "pitch": pitch, "yaw": yaw}
-        # # print(self.vehicle.recv_match().to_dict())
-        # return {}
-        msg1 = self.vehicle.recv_match(type='GLOBAL_POSITION_INT', blocking=blocking)
+        msg1 = self.vehicle.recv_match(type='GLOBAL_POSITION_INT',
+                                       blocking=blocking)
         msg2 = self.vehicle.recv_match(type='ATTITUDE', blocking=blocking)
         msg3 = self.vehicle.recv_match(type='SYS_STATUS', blocking=blocking)
 
@@ -266,7 +228,6 @@ class PixhawkController:
             telemetry_msg["battery_percentage"] = msg3.battery_remaining
         telemetry_msg["time"] = datetime.now().strftime("%H:%M:%S %f")
         return telemetry_msg
-
 
     def _get_telemetry(self):
         count = 0
