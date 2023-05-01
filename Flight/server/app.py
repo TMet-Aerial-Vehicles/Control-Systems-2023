@@ -109,6 +109,18 @@ def get_command():
     return {}
 
 
+@app.route('/battery-change-completed', methods=['POST'])
+def battery_change_completed():
+    # Called by Ground
+    return flightController.battery_change_is_complete()
+
+
+@app.route('/check-for-battery-change-completed', methods=['GET'])
+def check_for_battery_change_completed():
+    # Called by script
+    return flightController.check_for_battery_change_completed()
+
+
 if __name__ == '__main__':
     app.run(
         host=config['Flight_API']['API_Local_IP'],

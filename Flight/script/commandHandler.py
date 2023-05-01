@@ -1,10 +1,22 @@
+import configparser
+import logging
+import requests
 import time
+import os
+import math
 
+from Shared.loggingHandler import setup_logging
 from Flight.script.pixhawkController import PixhawkController
 from Flight.script.lightController import LightController
 from Flight.script.soundController import SoundController
 
-import math
+
+config = configparser.ConfigParser()
+config.read(os.path.join(os.path.dirname(__file__), '../..', 'config.ini'))
+setup_logging(config['Flight_Script']['App_Name'])
+
+FLIGHT_API = f"http://{config['Flight_API']['API_IP_Address']}" + \
+             f":{config['Flight_API']['API_IP_PORT']}"
 
 
 class CommandHandler:
@@ -82,5 +94,18 @@ class CommandHandler:
             target_alt = self.current_command["Details"]["Altitude"]
             if target_alt - 0.5 < telemetry['altitude'] < target_alt + 0.5:
                 return True
+        elif self.current_command["Command"] == "BatteryChange":
+            # Wait till button pressed that battery change completed
+            try:
+                battery_endpoint = "check-for-battery-change-completed"
+                response = requests.get(f"{FLIGHT_API}/{battery_endpoint}")
+                response.raise_for_status()
+                if response.json() and "battery_change_completed" in response.json():
+                    bc_status = response.json()["battery_change_completed"]
+                    logging.info(f"Battery Change Status: {bc_status}")
+                    return bc_status
+            except requests.exceptions.RequestException as e:
+                logging.error(f"Battery Change Status Error {e}")
+                return False
 
         return False

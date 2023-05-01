@@ -98,7 +98,7 @@ while True:
                 commandHandler.execute_command(priority_cmd)
                 executing_priority_command = True
                 # Hold after priority command to stabilize/finish
-                time.sleep(3)
+                time.sleep(5)
     except requests.exceptions.RequestException as e:
         logging.info("Unable to check for priority command", e)
 

@@ -35,6 +35,8 @@ class FlightController:
         self.priority_command = {}
         self.priority_commands_executed = []
 
+        self.battery_change_completed = False
+
     def propagate_telemetry(self, json_response: dict):
         resp = requests.post(f"{GROUND_API}/set-telemetry", json=json_response)
         logging.info(resp)
@@ -121,3 +123,10 @@ class FlightController:
                 "success": True,
                 "priority_command_created": False
             }
+
+    def battery_change_is_complete(self):
+        self.battery_change_completed = True
+        return {"battery_change_completed": self.battery_change_completed}
+
+    def check_for_battery_change_completed(self):
+        return {"battery_change_completed": self.battery_change_completed}
