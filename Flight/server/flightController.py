@@ -32,17 +32,20 @@ class FlightController:
         self.is_route_updated = False   # check if updated since last check
         self.updated_route = []
 
-        self.route_confirmed = False
-
-        self.current_command = {}
-        self.commands = []
-        self.last_command = ""
-        self.priority_command = ""
+        self.priority_command = {}
+        self.priority_commands_executed = []
 
     def propagate_telemetry(self, json_response: dict):
         resp = requests.post(f"{GROUND_API}/set-telemetry", json=json_response)
         logging.info(resp)
         return success_dict("Sent")
+
+    def initiate_launch(self):
+        self.launch = True
+        return {"initiate_launch": self.launch}
+
+    def check_for_launch(self):
+        return {"initiate_launch": self.launch}
 
     def set_initial_route(self, json_response: dict):
         # Parse route from json
@@ -61,27 +64,60 @@ class FlightController:
         }
 
     def set_detour_route(self, json_response: dict):
-        # Update next route to
-        # Set priority command to brake
-        # DO NOT RECOMMENCE NEXT COMMAND TILL ROUTE FULLY UPDATED
-        pass
+        """
+        Update the flight plan with new route and priority command
+        """
+        # Verify json_response
+        if "Priority Command" in json_response and \
+                "Updated Flight Plan" in json_response:
+            # Set priority command
+            self.priority_command = json_response["Priority Command"]
 
-    def initiate_launch(self):
-        self.launch = True
-        return {"initiate_launch": self.launch}
+            # Set new route
+            self.is_route_updated = True
+            self.updated_route = json_response["Updated Flight Plan"]
+        else:
+            return error_dict("Missing JSON Parameters")
 
-    def check_for_launch(self):
-        return {"initiate_launch": self.launch}
+    def set_priority_command(self, json_response: dict):
+        """
+        Send a priority command to execute
+        """
+        # Verify json_response
+        if "Priority Command" in json_response:
+            # Set priority command
+            self.priority_command = json_response["Priority Command"]
+        else:
+            return error_dict("Missing JSON Parameters")
 
     def check_for_route_update(self):
-        # TODO: Complete
-        return {
-            "success": True,
-            "route_updated": False
-        }
+        if self.is_route_updated:
+            return {
+                "success": True,
+                "route_updated": True,
+                "route": self.updated_route
+            }
+        else:
+            return {
+                "success": True,
+                "route_updated": False
+            }
 
     def check_for_priority_command(self):
-        return {
-            "success": True,
-            "priority_command_created": False
-        }
+        """
+        Returns priority command if it exists. Resets command after read
+        """
+        if self.priority_command:
+            self.priority_commands_executed.append(self.priority_command)
+            return_msg = {
+                "success": True,
+                "priority_command_created": True,
+                "priority_command": self.priority_command
+            }
+            self.priority_command = {}
+            return return_msg
+        else:
+            return {
+                "success": True,
+                "priority_command_created": False
+            }

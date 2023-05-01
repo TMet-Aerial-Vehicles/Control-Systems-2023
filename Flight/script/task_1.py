@@ -79,8 +79,6 @@ current_command_sent = False
 while True:
     current_command = route[route_index]
 
-    # Hold/Loiter Commands may need to be processed here to not lose process
-
     # Send command to Pixhawk
     if not current_command_sent:
         print("Executing ", current_command)
@@ -93,12 +91,13 @@ while True:
         response = requests.get(f"{FLIGHT_API}/check-for-priority-command")
         response.raise_for_status()
         if response.json() and "priority_command" in response.json():
-            priority_command = response.json()["priority_command"]
-            if priority_command:
-                logging.info(f"Executing Priority Command")
-                commandHandler.execute_command(priority_command)
+            priority_cmd_exists = response.json()["priority_command_created"]
+            if priority_cmd_exists:
+                priority_cmd = response.json()["priority_command"]
+                logging.info(f"Executing Priority Command: {priority_cmd}")
+                commandHandler.execute_command(priority_cmd)
                 executing_priority_command = True
-                # Hold after priority command to stabilize
+                # Hold after priority command to stabilize/finish
                 time.sleep(3)
     except requests.exceptions.RequestException as e:
         logging.info("Unable to check for priority command", e)
@@ -108,10 +107,10 @@ while True:
         response = requests.get(f"{FLIGHT_API}/check-for-route-update")
         response.raise_for_status()
         if response.json():
-            route_updated = response.json()['route_updated']
+            route_updated = response.json()["route_updated"]
             if route_updated:
                 logging.info("Updated Route Received")
-                route = response.json()['route']
+                route = response.json()["route"]
                 route_index = 0
                 commandHandler.execute_command(route[route_index])
     except requests.exceptions.RequestException as e:

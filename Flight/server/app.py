@@ -87,17 +87,12 @@ def set_detour_route():
     return flightController.set_detour_route(json_response)
 
 
-@app.route('/get-route', methods=['GET'])
-def get_route():
-    # Called by script
-    return {}
-
-
-@app.route('/update-route', methods=['POST'])
-def set_route():
-    # Called by ground qr-2
-    # Can also be called by website (adaptable)
-    return {}
+@app.route('/set-priority-command', methods=['POST'])
+def set_priority_command():
+    # Called from ground
+    # Sets priority command for flight to execute
+    json_response = request.get_json()
+    return flightController.set_priority_command(json_response)
 
 
 @app.route('/set-command', methods=['POST'])
