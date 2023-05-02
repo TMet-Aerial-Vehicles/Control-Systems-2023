@@ -9,7 +9,7 @@ DIRECTORY = os.getcwd()
 class SoundController:
 
     def __init__(self):
-        sound_file_path = f"{DIRECTORY}/Flight/sounds/beep.wav"
+        sound_file_path = f"{DIRECTORY}/../../Flight/sounds/beep.wav"
         self.sound = sa.WaveObject.from_wave_file(sound_file_path)
 
     def countdown(self, time: int) -> None:

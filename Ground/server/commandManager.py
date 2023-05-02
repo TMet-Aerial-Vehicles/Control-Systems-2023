@@ -104,7 +104,7 @@ class CommandManager:
             plan.append(nav_command(waypoint.name, waypoint.latitude,
                                     waypoint.longitude, FLIGHT_ALTITUDE))
 
-        plan.append({"Command": "Land"})
+        plan.append({"Command": "QLand"})
 
         json_route = {"Route": plan}
         self.initial_route_plan = plan
@@ -161,7 +161,7 @@ class CommandManager:
             )
 
         # Add final landing
-        flight_update_msg["Updated Flight Plan"].append({"Command": "Land"})
+        flight_update_msg["Updated Flight Plan"].append({"Command": "QLand"})
 
         self.updated_route_plan = flight_update_msg
         print(flight_update_msg)

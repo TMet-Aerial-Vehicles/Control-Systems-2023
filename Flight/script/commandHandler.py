@@ -33,6 +33,7 @@ class CommandHandler:
         # Commands Accepted:
         #   Takeoff, Navigate, Altitude, Land, RTL, BatteryChange, NavMode,
         #   Brake, Hold
+        print("Executing Command", command)
         self.current_command = command
         if command["Command"] == "Takeoff":
             print("Setting Guided")
@@ -62,7 +63,9 @@ class CommandHandler:
             self.sound.countdown(command["Details"]["Time"])
         elif command["Command"] == "Land":
             # TODO: Use CV for Landing
-            self.pixhawk.set_mode("Land")
+            self.pixhawk.set_mode("LAND")
+        elif command["Command"] == "Qland":
+            self.pixhawk.set_mode("QLAND")
         elif command["Command"] == "RTL":
             self.pixhawk.set_mode("RTL")
 
