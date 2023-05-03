@@ -135,7 +135,7 @@ msg = the_connection.mav.set_position_target_global_int_encode(
     0b0000111111000111, # type_mask (only positions enabled)
     int(lat * 1e7), # lat (in degrees * 1e7)
     int(lon * 1e7), # lon (in degrees * 1e7)
-    int(alt * 1e3), # alt (in meters * 1e3)
+    int(alt), # alt (in meters)
     0, 0, 0, # x, y, z velocity (not used)
     0, 0, 0, # x, y, z acceleration (not used)
     0, 0) # yaw, yaw_rate (not used)
