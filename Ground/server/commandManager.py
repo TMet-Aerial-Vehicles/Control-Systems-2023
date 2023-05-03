@@ -98,13 +98,13 @@ class CommandManager:
         """
         # Create route plan
         plan = [
-            {"Command": "Takeoff", "Details": {"Altitude": 80}}
+            {"Command": "Takeoff", "Details": {"Altitude": FLIGHT_ALTITUDE}}
         ]
         for waypoint in qr_data["waypoints"]:
             plan.append(nav_command(waypoint.name, waypoint.latitude,
                                     waypoint.longitude, FLIGHT_ALTITUDE))
 
-        plan.append({"Command": "QLand"})
+        plan.append({"Command": "Land"})
 
         json_route = {"Route": plan}
         self.initial_route_plan = plan
@@ -161,7 +161,7 @@ class CommandManager:
             )
 
         # Add final landing
-        flight_update_msg["Updated Flight Plan"].append({"Command": "QLand"})
+        flight_update_msg["Updated Flight Plan"].append({"Command": "Land"})
 
         self.updated_route_plan = flight_update_msg
         print(flight_update_msg)
