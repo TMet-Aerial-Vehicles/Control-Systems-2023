@@ -60,6 +60,16 @@ class GroundController:
         """
         return self.qr_handler.get_qr(qr_type)
 
+    def load_flight_plan_from_file(self):
+        """Loads flight plan from file, and sends plan to Flight API
+        Returns: API Response
+        """
+        load_transmit_status = self.command_manager.load_flight_plan_from_file()
+        if load_transmit_status:
+            return success_dict("Flight Plan Loaded Successfully")
+        else:
+            return error_dict("Flight Plan Not Loaded. See Logs")
+
     def process_telemetry(self, json_response: dict):
         """Processes telemetry information by updating React and verifying
         drone not nearing boundary

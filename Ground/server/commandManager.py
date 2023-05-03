@@ -4,14 +4,19 @@ import logging
 import configparser
 import requests
 import os
+
 from qr import QrTypes, QrHandler
-from telemetryHandler import TelemetryHandler
 from route import RouteTypes
 from waypoint import Waypoint
+
+from telemetryHandler import TelemetryHandler
+from emailHandler import EmailHandler
+
 from algorithm import task_2, format_for_execute_command
 from detourAlgorithm import get_detour_route
 
 from Shared.loggingHandler import setup_logging
+
 
 config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), '../..', 'config.ini'))
@@ -19,8 +24,6 @@ setup_logging(config['Ground']['App_Name'])
 
 FLIGHT_API = f"http://{config['Flight_API']['API_IP_Address']}" + \
              f":{config['Flight_API']['API_IP_PORT']}"
-# Boolean to email flight plan or send flight plan to drone to execute
-TASK_2_EMAIL_DAY = True
 
 # Weight of drone used to filter Task 2 routes with weight limits
 VEHICLE_WEIGHT = 7
@@ -61,33 +64,7 @@ class CommandManager:
         elif qr_type == QrTypes.Task_1_Update_Qr:
             self.handle_updated_route_qr(qr_data)
         elif qr_type == QrTypes.Task_2_Qr:
-
-            # Filter inaccessible routes
-            routes = [route for route in qr_data["routes"]
-                      if route.max_vehicle_weight > VEHICLE_WEIGHT]
-
-            if TASK_2_EMAIL_DAY:
-                # Optimization algorithm
-                flightplan = task_2(routes)
-
-                # Save to json
-                flight_instructions = format_for_execute_command(flightplan)
-                json_obj = json.dumps(flight_instructions, indent=4)
-                with open("task2.json", "w") as outfile:
-                    outfile.write(json_obj)
-
-                # Send email with route plan
-                comp_email = flightplan.generate_email()
-                # TODO: Send email https://stackoverflow.com/questions/6270782/how-to-send-an-email-with-python
-
-            else:
-                # Read flight plan from file
-                with open('task2.json', "r") as openfile:
-                    flight_instructions = json.load(openfile)
-
-                # Send flight plan to Flight
-                # TODO: Update with latest communication using str(flight_instructions)
-                # self.socket.send_message(f"QR3:{str(flight_instructions)}")
+            self.handle_task_2_qr(qr_data)
 
     def handle_initial_route_qr(self, qr_data: dict):
         """
@@ -172,6 +149,59 @@ class CommandManager:
             response.raise_for_status()
         except requests.exceptions.RequestException as e:
             logging.info(f"Parse Route - Detour Route POST Error:\n\t{e}")
+
+    def handle_task_2_qr(self, qr_data: dict):
+        """
+        Handles Task 2 QR. Finds optimized route path from given routes.
+        Saves Flight plan to json file and sends email
+        Args:
+            qr_data: Dict containing routes
+        Returns: None
+        """
+        # Filter inaccessible routes
+        routes = [route for route in qr_data["routes"]
+                  if route.max_vehicle_weight > VEHICLE_WEIGHT]
+
+        # Optimization algorithm
+        flight_plan = task_2(routes)
+
+        # Save to json
+        flight_instructions = format_for_execute_command(flight_plan)
+        json_obj = json.dumps(flight_instructions, indent=4)
+        logging.info(flight_instructions)
+        print(flight_instructions)
+        self.initial_route_plan = flight_instructions
+        with open("task2.json", "w") as outfile:
+            outfile.write(json_obj)
+
+        # Send email with route plan
+        comp_email = flight_plan.generate_email()
+        email_handler = EmailHandler()
+        logging.info("Sending Email", comp_email)
+        print("Sending Email")
+        email_handler.send_email(comp_email["Subject"], comp_email["Body"])
+
+    def load_flight_plan_from_file(self):
+        """
+        Reads the saved Flight Plan in Task 2 from file. Sends plan to Flight
+        """
+        # Read flight plan from file
+        with open('testing_task2.json', "r") as openfile:
+            flight_instructions = json.load(openfile)
+
+            # Send flight plan to Flight
+            json_route = {"Route": flight_instructions}
+            self.initial_route_plan = flight_instructions
+            print(json_route)
+
+            try:
+                response = requests.post(f"{FLIGHT_API}/set-initial-route",
+                                         json=json_route)
+                response.raise_for_status()
+                return True
+            except requests.exceptions.RequestException as e:
+                logging.error(f"Sending Flight Plan POST Error:\n\t{e}")
+        return False
 
     def verify_routes(self, route_type: RouteTypes, routes) -> bool:
         """Validate routes with saved routes

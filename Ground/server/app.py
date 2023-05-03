@@ -56,6 +56,12 @@ def get_parsed_qr(qr_type):
     return groundController.get_qr(qr_type)
 
 
+@app.route('/load-route', methods=['POST'])
+def load_route():
+    # Loads pre-saved flight plan
+    return groundController.load_flight_plan_from_file()
+
+
 @app.route('/get-telemetry', methods=['GET'])
 def get_telemetry():
     return groundController.get_latest_telemetry()
