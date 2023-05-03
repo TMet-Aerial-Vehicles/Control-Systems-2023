@@ -32,7 +32,7 @@ class CommandHandler:
     def execute_command(self, command):
         # Commands Accepted:
         #   Takeoff, Navigate, Altitude, Land, RTL, BatteryChange, NavMode,
-        #   Brake, Hold
+        #   Brake, Hold, Emergency Land
         print("Executing Command", command)
         self.current_command = command
         if command["Command"] == "Takeoff":
@@ -66,6 +66,8 @@ class CommandHandler:
             self.pixhawk.set_mode("LAND")
         elif command["Command"] == "Qland":
             self.pixhawk.set_mode("QLAND")
+        elif command["Command"] == "Emergency Land":
+            self.pixhawk.set_mode("LAND")
         elif command["Command"] == "RTL":
             self.pixhawk.set_mode("RTL")
 

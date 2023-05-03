@@ -127,34 +127,3 @@ while True:
         current_command_sent = False
     else:
         print("\tCommand not completed")
-
-# Pseudo
-# While route not complete or not error:
-# Get route
-# - Set up end goal
-# Get command
-# If not takeoff,
-# Wait for Takeoff command
-# If takeoff
-# Countdown(30sec w sound)
-# Call pixhawk takeoff
-#
-# Set to guided mode
-# Send gps coordinates to pixhawk
-# While not there yet,
-# wait and send telemetry
-# Get route from API to check changes
-# Check if need to cancel current route
-# If there,
-# If task 1, set up next route
-#
-#
-#
-# If task 2
-# Land
-# Countdown
-# Takeoff
-# Set up next route
-#
-#
-#

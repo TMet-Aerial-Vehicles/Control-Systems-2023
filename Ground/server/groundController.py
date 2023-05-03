@@ -70,6 +70,16 @@ class GroundController:
         else:
             return error_dict("Flight Plan Not Loaded. See Logs")
 
+    def kill_flight(self):
+        """Sends emergency land priority command to flight
+        Returns: API Response
+        """
+        message_status = self.command_manager.send_kill_flight_command()
+        if message_status:
+            return success_dict("Emergency Land Command Sent")
+        else:
+            return error_dict("Unable to Send Emergency Command. See Logs")
+
     def process_telemetry(self, json_response: dict):
         """Processes telemetry information by updating React and verifying
         drone not nearing boundary

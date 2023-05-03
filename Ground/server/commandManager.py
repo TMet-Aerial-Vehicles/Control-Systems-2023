@@ -203,6 +203,22 @@ class CommandManager:
                 logging.error(f"Sending Flight Plan POST Error:\n\t{e}")
         return False
 
+    def send_kill_flight_command(self):
+        """Sends emergency land command to flight
+        Returns: True is command sent successfully
+        """
+        priority_command = {
+            "Priority Command": {"Command": "Emergency Land"}
+        }
+        try:
+            response = requests.post(f"{FLIGHT_API}/set-priority-command",
+                                     json=priority_command)
+            response.raise_for_status()
+            return True
+        except requests.exceptions.RequestException as e:
+            logging.info(f"Parse Route - Initial Route POST Error:\n\t{e}")
+            return False
+
     def verify_routes(self, route_type: RouteTypes, routes) -> bool:
         """Validate routes with saved routes
 

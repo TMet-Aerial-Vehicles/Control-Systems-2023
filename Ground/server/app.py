@@ -39,6 +39,11 @@ def task_2():
     return
 
 
+@app.route('/heartbeat', methods=['GET'])
+def heartbeat():
+    return {"success": True}
+
+
 @app.route('/process-qr', methods=['POST'])
 def process_qr():
     # Accepts 2 form parameters, raw_qr_string and qr_type (enum)
@@ -60,6 +65,12 @@ def get_parsed_qr(qr_type):
 def load_route():
     # Loads pre-saved flight plan
     return groundController.load_flight_plan_from_file()
+
+
+@app.route('/kill-flight', methods=['POST'])
+def kill_flight():
+    # Immediately land the drone
+    return groundController.kill_flight()
 
 
 @app.route('/get-telemetry', methods=['GET'])
