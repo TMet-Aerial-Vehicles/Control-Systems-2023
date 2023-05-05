@@ -65,6 +65,12 @@ class FlightController:
             "route": self.route
         }
 
+    def get_updated_route(self):
+        return {
+            "success": True,
+            "route": self.updated_route
+        }
+
     def set_detour_route(self, json_response: dict):
         """
         Update the flight plan with new route and priority command
@@ -94,6 +100,9 @@ class FlightController:
 
     def check_for_route_update(self):
         if self.is_route_updated:
+            # Reset after route updated checked
+            self.is_route_updated = False
+
             return {
                 "success": True,
                 "route_updated": True,

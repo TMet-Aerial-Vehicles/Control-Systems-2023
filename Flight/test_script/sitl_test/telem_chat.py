@@ -4,7 +4,7 @@ from pymavlink import mavutil
 # Consistently print received telemetry
 
 # Set up the connection to the autopilot
-master = mavutil.mavlink_connection('udp:127.0.0.1:14552')
+master = mavutil.mavlink_connection('udp:craigpc.tmav.ca:14550')
 
 # Wait for the heartbeat message to find the system ID
 master.wait_heartbeat()

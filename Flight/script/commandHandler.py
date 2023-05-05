@@ -33,6 +33,10 @@ class CommandHandler:
         # Commands Accepted:
         #   Takeoff, Navigate, Altitude, Land, RTL, BatteryChange, NavMode,
         #   Brake, Hold, Emergency Land
+        if "Command" in self.current_command and \
+                self.current_command["Command"] == "Emergency Land":
+            time.sleep(30)
+
         print("Executing Command", command)
         self.current_command = command
         if command["Command"] == "Takeoff":

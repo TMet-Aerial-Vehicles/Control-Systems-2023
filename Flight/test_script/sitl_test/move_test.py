@@ -17,8 +17,8 @@ print("Heartbeat from system (system %u component %u)" %
       (the_connection.target_system, the_connection.target_component))
 
 print("Moving")
-latitude, longitude, altitude = 48.511464, -71.643298, 40
-lat, lon, alt = 48.511464, -71.643298, 40
+latitude, longitude, altitude = 48.511464, -71.6491457, 40
+lat, lon, alt = 48.511464,-71.6491457, 40
 # the_connection.mav.send(
 #     mavutil.mavlink.MAVLink_set_position_target_global_int_message(
 #         10, the_connection.target_system, the_connection.target_component,
@@ -128,20 +128,30 @@ print("Sending move")
 #         altitude,
 #         0, 0, 0, 0, 0, 0, 0, 0))
 # Create a SET_POSITION_TARGET_GLOBAL_INT message
-msg = the_connection.mav.set_position_target_global_int_encode(
-    0, # time_boot_ms (not used)
-    0, 0, # target_system, target_component
-    mavutil.mavlink.MAV_FRAME_GLOBAL_INT, # frame
-    0b0000111111000111, # type_mask (only positions enabled)
-    int(lat * 1e7), # lat (in degrees * 1e7)
-    int(lon * 1e7), # lon (in degrees * 1e7)
-    int(alt), # alt (in meters)
-    0, 0, 0, # x, y, z velocity (not used)
-    0, 0, 0, # x, y, z acceleration (not used)
-    0, 0) # yaw, yaw_rate (not used)
+print("Actually sending move")
+# msg = the_connection.mav.set_position_target_global_int_encode(
+#     0, # time_boot_ms (not used)
+#     0, 0, # target_system, target_component
+#     mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT, # frame
+#     0b0000111111000111, # type_mask (only positions enabled)
+#     int(lat * 1e7), # lat (in degrees * 1e7)
+#     int(lon * 1e7), # lon (in degrees * 1e7)
+#     int(alt), # alt (in meters)
+#     0, 0, 0, # x, y, z velocity (not used)
+#     0, 0, 0, # x, y, z acceleration (not used)
+#     0, 0) # yaw, yaw_rate (not used)
+the_connection.mav.send(
+    mavutil.mavlink.MAVLink_set_position_target_global_int_message(
+        10,the_connection.target_system, the_connection.target_component,
+        mavutil.mavlink.MAV_FRAME_GLOBAL_RELATIVE_ALT,
+        int(0b110111111000),
+        int(latitude * 10**7),
+        int(longitude * 10**7),
+        altitude,
+        0, 0, 0, 0, 0, 0, 0, 0))
 
 # Send the message to the vehicle
-the_connection.mav.send(msg)
+# the_connection.mav.send(msg)
 msg = the_connection.recv_match(type='COMMAND_ACK', blocking=True)
 print(msg)
 # the_connection.mav.set_mode_send(mavutil.mavlink.MAV_MODE_RTL, 0)

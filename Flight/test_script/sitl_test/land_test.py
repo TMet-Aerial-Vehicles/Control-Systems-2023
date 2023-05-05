@@ -1,7 +1,7 @@
 from pymavlink import mavutil
 
 # Start a connection listening to a UDP port
-the_connection = mavutil.mavlink_connection('udp:10.147.20.120:14551')
+the_connection = mavutil.mavlink_connection('udp:127.0.0.1:14552')
 
 # Wait for the first heartbeat
 #   This sets the system and component ID of remote system for the link
@@ -11,7 +11,7 @@ print("Heartbeat from system (system %u component %u)" %
 
 print(the_connection.mode_mapping())
 
-mode_id = the_connection.mode_mapping()['QLAND']
+mode_id = the_connection.mode_mapping()['LAND']
 the_connection.mav.set_mode_send(
     the_connection.target_system,
     mavutil.mavlink.MAV_MODE_FLAG_CUSTOM_MODE_ENABLED,

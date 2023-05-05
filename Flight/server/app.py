@@ -55,6 +55,12 @@ def get_initial_route():
     return flightController.get_initial_route()
 
 
+@app.route('/get-updated-route', methods=['GET'])
+def get_updated_route():
+    # Called by script
+    return flightController.get_updated_route()
+
+
 @app.route('/launch', methods=['POST'])
 def launch():
     # Called by Ground
