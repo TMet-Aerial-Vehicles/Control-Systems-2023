@@ -3,6 +3,8 @@ import logging
 import requests
 import time
 import os
+import sys
+sys.path.append('../../')
 
 from Shared.loggingHandler import setup_logging
 from Flight.script.pixhawkController import PixhawkController
