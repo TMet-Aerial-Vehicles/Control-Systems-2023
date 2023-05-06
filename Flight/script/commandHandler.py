@@ -93,7 +93,7 @@ class CommandHandler:
             return True
         elif self.current_command["Command"] == "Land":
             # TODO: Use CV for Landing
-            if -0.5 < telemetry['altitude'] < 0.5:
+            if -3.5 < telemetry['altitude'] < 0.5:
                 return True
         elif self.current_command["Command"] == "RTL":
             if -0.5 < telemetry['altitude'] < 0.5:
