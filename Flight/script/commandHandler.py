@@ -45,7 +45,6 @@ class CommandHandler:
             time.sleep(1)
             print("Arming")
             self.pixhawk.arm()
-            time.sleep(1)
             print("Takeoff")
             self.pixhawk.takeoff(command["Details"]["Altitude"])
         elif command["Command"] == "Navigate":
