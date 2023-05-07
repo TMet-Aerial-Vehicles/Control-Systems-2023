@@ -37,9 +37,22 @@ class PixhawkController:
         }
         self.system_id = 0
         self.component_id = 0
+
+        self.last_telemetry = {
+            'latitude': -1,
+            'longitude': -1,
+            'altitude': -1,
+            'roll': -1,
+            'yaw': -1,
+            'pitch': -1,
+            'battery_percentage': -1
+        }
+
         self.starting_latitude = 0
         self.starting_longitude = 0
         self.starting_altitude = 0
+
+        self.takeoff_altitude = 0
 
     def connect(self, device):
         self.vehicle = mavutil.mavlink_connection(device, baud=115200)
@@ -67,6 +80,7 @@ class PixhawkController:
         self.starting_latitude = position.lat / 1e7
         self.starting_longitude = position.lon / 1e7
         self.starting_altitude = position.alt / 1e3
+        self.current_altitude = position.alt / 1e3
 
         # Start telemetry thread
         self.telemetry_thread = threading.Thread(target=self._get_telemetry)
@@ -121,6 +135,7 @@ class PixhawkController:
     def takeoff(self, altitude):
         print("Taking off to {} meters".format(altitude))
         self.current_command = "Takeoff"
+        self.takeoff_altitude = self.last_telemetry["altitude"]
         self.vehicle.mav.command_long_send(
             self.system_id,
             self.component_id,
@@ -232,9 +247,10 @@ class PixhawkController:
     def _get_telemetry(self):
         count = 0
         while not self.close_thread:
-            count += 0.25
+            count += 0.5
             time.sleep(0.25)
             msg = self.get_telemetry(blocking=True)
+            self.last_telemetry = msg
             msg['current_command'] = self.current_command
             logging.info(msg)
             if self.flight_api_connected and count % 1 == 0:

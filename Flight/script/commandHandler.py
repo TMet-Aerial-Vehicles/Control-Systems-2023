@@ -77,8 +77,12 @@ class CommandHandler:
     def is_current_command_completed(self):
         telemetry = self.pixhawk.get_telemetry(blocking=True)
 
+        # TODO: Add post request as back up to know when command finished
+
         if self.current_command["Command"] == "Takeoff":
-            target_alt = self.current_command["Details"]["Altitude"]
+            starting_alt = self.pixhawk.takeoff_altitude
+            command_alt = self.current_command["Details"]["Altitude"]
+            target_alt = starting_alt + command_alt
             if target_alt - 0.5 < telemetry['altitude'] < target_alt + 0.5:
                 return True
         elif self.current_command["Command"] == "Navigate":
@@ -93,14 +97,18 @@ class CommandHandler:
             return True
         elif self.current_command["Command"] == "Land":
             # TODO: Use CV for Landing
-            if -3.5 < telemetry['altitude'] < 0.5:
+            starting_alt = self.pixhawk.takeoff_altitude
+            if abs(telemetry['altitude'] - starting_alt) < 4:
                 return True
         elif self.current_command["Command"] == "RTL":
-            if -0.5 < telemetry['altitude'] < 0.5:
+            starting_alt = self.pixhawk.takeoff_altitude
+            if abs(telemetry['altitude'] - starting_alt) < 4:
                 return True
         elif self.current_command["Command"] == "Altitude":
-            target_alt = self.current_command["Details"]["Altitude"]
-            if target_alt - 0.5 < telemetry['altitude'] < target_alt + 0.5:
+            starting_alt = self.pixhawk.takeoff_altitude
+            command_alt = self.current_command["Details"]["Altitude"]
+            target_alt = starting_alt + command_alt
+            if target_alt - 1 < telemetry['altitude'] < target_alt + 1:
                 return True
         elif self.current_command["Command"] == "BatteryChange":
             # Wait till button pressed that battery change completed
